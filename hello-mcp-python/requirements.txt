@@ -1,0 +1,4 @@
+mcp>=0.10.0
+python-dotenv>=1.0.0
+pytest>=7.0.0
+asyncio-mqtt>=0.13.0
