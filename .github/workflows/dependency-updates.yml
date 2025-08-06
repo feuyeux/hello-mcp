@@ -30,8 +30,12 @@ jobs:
       - name: Update Python dependencies
         run: |
           cd hello-mcp-python
-          if [ -f requirements.txt ]; then
-            pip-compile --upgrade requirements.in || pip-compile --upgrade --generate-hashes requirements.txt || echo "No requirements.in found, using existing requirements.txt"
+          if [ -f requirements.in ]; then
+            pip-compile --upgrade requirements.in
+          else
+            # If no requirements.in, create one from requirements.txt and then upgrade
+            sed 's/>=.*//' requirements.txt > requirements.in
+            pip-compile --upgrade requirements.in
           fi
 
       - name: Create Python PR

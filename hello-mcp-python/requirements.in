@@ -1,0 +1,19 @@
+# MCP Streamable HTTP Implementation Dependencies
+# Core MCP library
+mcp>=1.12.0
+
+# HTTP Server Framework
+fastapi>=0.116.0
+uvicorn[standard]>=0.35.0
+
+# HTTP Client
+httpx>=0.28.0
+
+# Environment and Configuration
+python-dotenv>=1.1.0
+
+# Testing
+pytest>=8.4.0
+
+# Optional: MQTT for other protocols (keeping for compatibility)
+asyncio-mqtt>=0.16.0

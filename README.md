@@ -13,15 +13,15 @@ Each implementation provides:
 
 ## Language Implementations
 
-| Language   | Directory          | Port|
-|------------|------------|----------|
-| Java       | `hello-mcp-java/`  | 8061|
-| Kotlin     | `hello-mcp-kotlin/`| 8062|
-| Python     | `hello-mcp-python/`| 8063|
-| TypeScript | `hello-mcp-ts/`    | 8064|
-| Rust       | `hello-mcp-rust/`  | 8065|
-| C#         | `hello-mcp-csharp/`| 8066|
-| Swift      | `hello-mcp-swift/` | 8067|
+| Language   | SDK                                                    | Directory           | Port |
+| :--------- | :----------------------------------------------------- | :------------------ | :--- |
+| Java       | https://github.com/modelcontextprotocol/java-sdk       | `hello-mcp-java/`   | 8061 |
+| Kotlin     | https://github.com/modelcontextprotocol/kotlin-sdk     | `hello-mcp-kotlin/` | 8062 |
+| Python     | https://github.com/modelcontextprotocol/python-sdk     | `hello-mcp-python/` | 8063 |
+| TypeScript | https://github.com/modelcontextprotocol/typescript-sdk | `hello-mcp-ts/`     | 8064 |
+| Rust       | https://github.com/modelcontextprotocol/rust-sdk       | `hello-mcp-rust/`   | 8065 |
+| C#         | https://github.com/modelcontextprotocol/csharp-sdk     | `hello-mcp-csharp/` | 8066 |
+| Swift      | https://github.com/modelcontextprotocol/swift-sdk      | `hello-mcp-swift/`  | 8067 |
 
 ## API Examples
 
