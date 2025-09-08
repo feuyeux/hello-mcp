@@ -188,3 +188,5 @@ Thumbs.db
 /hello-mcp-kotlin/.gradle/
 /hello-mcp-kotlin/gradle/
 /hello-mcp-swift/.build/
+/hello-mcp-kotlin/gradlew
+/hello-mcp-kotlin/gradlew.bat

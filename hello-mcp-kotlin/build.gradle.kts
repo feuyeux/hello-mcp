@@ -9,7 +9,31 @@ group = "org.feuyeux.ai"
 version = "1.0.0"
 
 repositories {
+    // 国内 Maven 镜像仓库 - 优先使用
+    maven {
+        name = "Aliyun"
+        url = uri("https://maven.aliyun.com/repository/public")
+    }
+    maven {
+        name = "Aliyun Central"
+        url = uri("https://maven.aliyun.com/repository/central")
+    }
+    maven {
+        name = "Aliyun JCenter"
+        url = uri("https://maven.aliyun.com/repository/jcenter")
+    }
+    maven {
+        name = "Tencent"
+        url = uri("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
+    }
+    maven {
+        name = "Huawei"
+        url = uri("https://repo.huaweicloud.com/repository/maven/")
+    }
+    
+    // 备用官方仓库
     mavenCentral()
+    gradlePluginPortal()
 }
 
 val mcpVersion = "0.5.0"

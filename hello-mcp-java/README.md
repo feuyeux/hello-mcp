@@ -27,7 +27,7 @@ mvn spring-boot:run
 $ cd mcp-client
 
 # Hello Mcp
-$ mvn test "-Dtest=org.feuyeux.ai.hello.McpTests#testHelloMcp"
+$ mvn test "-Dtest=org.feuyeux.ai.hello.HelloMcpTests#testHelloMcpCall"
 17:00:57.575 [o.f.a.h.McpTests] QUESTION: 列出元素周期表的第14个元素的详细信息
 17:01:02.017 [o.f.a.h.McpTests] ASSISTANT: 元素周期表的第14个元素的详细信息如下：
 
