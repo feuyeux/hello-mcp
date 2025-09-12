@@ -70,7 +70,7 @@ pydantic-settings==2.10.1
     # via mcp
 pygments==2.19.2
     # via pytest
-pytest==8.4.1
+pytest==8.4.2
     # via -r requirements.in
 python-dotenv==1.1.1
     # via
