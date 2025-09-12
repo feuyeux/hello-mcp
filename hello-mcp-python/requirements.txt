@@ -97,7 +97,7 @@ starlette==0.47.2
     # via
     #   fastapi
     #   mcp
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   fastapi
     #   pydantic
