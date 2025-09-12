@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [python, nodejs, rust, java, kotlin]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Test Python
+        if: matrix.language == 'python'
+        run: |
+          cd hello-mcp-python
+          python -m pip install -r requirements.txt
+          python -c "import src.periodic_table; print('OK')"
+          
+      - name: Test Node.js
+        if: matrix.language == 'nodejs'
+        run: |
+          cd hello-mcp-ts
+          npm ci
+          npm test
+          
+      - name: Test Rust
+        if: matrix.language == 'rust'
+        run: |
+          cd hello-mcp-rust
+          cargo test
+          
+      - name: Test Java
+        if: matrix.language == 'java'
+        run: |
+          cd hello-mcp-java
+          mvn test
+          
+      - name: Test Kotlin
+        if: matrix.language == 'kotlin'
+        run: |
+          cd hello-mcp-kotlin
+          ./gradlew test

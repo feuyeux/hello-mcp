@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/hello-mcp-python"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "npm"
+    directory: "/hello-mcp-ts"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "cargo"
+    directory: "/hello-mcp-rust"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "maven"
+    directory: "/hello-mcp-java"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "automerge"
+
+  - package-ecosystem: "gradle"
+    directory: "/hello-mcp-kotlin"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "automerge"
