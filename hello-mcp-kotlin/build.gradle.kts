@@ -52,7 +52,7 @@ dependencies {
     
     // Logging
     implementation("org.slf4j:slf4j-nop:$slf4jVersion")
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.4")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.13")
     
     // Ktor for HTTP client/server if needed
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
