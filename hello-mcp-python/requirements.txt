@@ -47,7 +47,7 @@ idna==3.10
     #   httpx
 iniconfig==2.1.0
     # via pytest
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via mcp
 jsonschema-specifications==2025.4.1
     # via jsonschema
