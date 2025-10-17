@@ -4,21 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.feuyeux.ai.hello.pojo.Element;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.stereotype.Service;
 
 /**
  * HelloMcpService类
  *
- * <p>提供元素周期表查询服务的工具类，通过Spring AI的@Tool注解将方法暴露为MCP工具。 包含了完整的元素周期表数据和查询接口，支持按名称和序号查询元素信息。
+ * <p>提供元素周期表查询服务的工具类。 包含了完整的元素周期表数据和查询接口，支持按名称和序号查询元素信息。
  */
 @Slf4j
-@Service
 public class HelloMcpService {
   /** 存储所有元素周期表元素的列表 该列表在静态初始化块中被填充，包含了所有已知化学元素 */
   private static final List<Element> elements = new ArrayList<>();
 
-  /** 静态初始化块，程序启动时填充元素周期表数据 */
   static {
     initializePeriodicTable();
   }
@@ -158,22 +154,27 @@ public class HelloMcpService {
     elements.add(new Element(118, "Og", "鿫", "ào", "Oganesson", 294.0, 7, "0族"));
   }
 
-  /**
-   * 根据元素中文名称查询元素信息
-   *
-   * <p>此方法通过MCP协议暴露为工具，可供LLM调用。
-   *
-   * @param name 元素的中文名称，如"氢"、"氦"等
-   * @return 元素的详细信息字符串，包括名称、读音、英文名、原子序数等；如果未找到返回"元素不存在"
-   */
-  @Tool(description = "根据元素名称获取元素周期表元素信息")
   public String getElement(String name) {
     log.info("获取元素周期表元素信息: {}", name);
     if (name == null || name.isEmpty()) {
       return "元素名称不能为空";
     }
     return elements.stream()
-        .filter(element -> element.getName().equals(name))
+        .filter(
+            element -> {
+              boolean matchName = element.getName().equals(name);
+              boolean matchEnglish = element.getEnglishName().equalsIgnoreCase(name);
+              boolean matchSymbol = element.getSymbol().equalsIgnoreCase(name);
+              if (log.isDebugEnabled() && (matchName || matchEnglish || matchSymbol)) {
+                log.debug(
+                    "找到匹配: {} (name={}, english={}, symbol={})",
+                    element.getName(),
+                    matchName,
+                    matchEnglish,
+                    matchSymbol);
+              }
+              return matchName || matchEnglish || matchSymbol;
+            })
         .map(
             element ->
                 String.format(
@@ -187,18 +188,13 @@ public class HelloMcpService {
                     element.getPeriod(),
                     element.getGroup()))
         .findFirst()
-        .orElse("元素不存在");
+        .orElseGet(
+            () -> {
+              log.warn("未找到元素: {}", name);
+              return "元素不存在";
+            });
   }
 
-  /**
-   * 根据元素在周期表中的位置（原子序数）查询元素信息
-   *
-   * <p>此方法通过MCP协议暴露为工具，可供LLM调用。
-   *
-   * @param position 元素的原子序数，范围从1到118
-   * @return 元素的详细信息字符串，包括名称、读音、英文名、原子序数等；如果未找到返回错误信息
-   */
-  @Tool(description = "获取元素周期表指定位置的元素信息")
   public String getElementByPosition(int position) {
     log.info("获取元素周期表第{}个元素的信息", position);
     if (position <= 0 || position > elements.size()) {

@@ -1,7 +1,7 @@
 use hello_mcp_rust::periodic_table::PERIODIC_TABLE;
-use serde_json::{json, Value};
-use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tracing::{error, info};
+use mcp_sdk::server::{Server, ServerCapabilities, Tool};
+use mcp_sdk::transport::SseServerTransport;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -9,209 +9,118 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     info!("Hello MCP Rust Server starting...");
     
-    let stdin = io::stdin();
-    let mut stdout = io::stdout();
-    let mut reader = BufReader::new(stdin);
-    let mut line = String::new();
+    // 创建 MCP 服务器
+    let mut server = Server::new(
+        "hello-mcp-rust",
+        "1.0.0",
+        ServerCapabilities {
+            tools: Some(true),
+            ..Default::default()
+        },
+    );
     
-    loop {
-        line.clear();
-        match reader.read_line(&mut line).await {
-            Ok(0) => break, // EOF
-            Ok(_) => {
-                if let Ok(request) = serde_json::from_str::<Value>(&line) {
-                    let response = handle_request(request).await;
-                    let response_str = serde_json::to_string(&response).unwrap();
-                    stdout.write_all(response_str.as_bytes()).await?;
-                    stdout.write_all(b"\n").await?;
-                    stdout.flush().await?;
-                }
+    // 注册工具列表处理器
+    server.on_list_tools(|| {
+        info!("处理 tools/list 请求");
+        vec![
+            Tool {
+                name: "get_element".to_string(),
+                description: "根据元素名称获取元素周期表元素信息".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "元素的中文名称"
+                        }
+                    },
+                    "required": ["name"]
+                }),
+            },
+            Tool {
+                name: "get_element_by_position".to_string(),
+                description: "根据元素在周期表中的位置（原子序数）查询元素信息".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "position": {
+                            "type": "number",
+                            "description": "元素的原子序数，范围从1到118"
+                        }
+                    },
+                    "required": ["position"]
+                }),
+            },
+        ]
+    });
+    
+    // 注册工具调用处理器
+    server.on_call_tool(|name, arguments| {
+        info!("处理 tools/call 请求: {}", name);
+        
+        let result = match name.as_str() {
+            "get_element" => {
+                let element_name = arguments.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                get_element_by_name(element_name)
             }
-            Err(e) => {
-                error!("Error reading line: {}", e);
-                break;
+            "get_element_by_position" => {
+                let position = arguments.get("position").and_then(|v| v.as_u64()).unwrap_or(0) as u8;
+                get_element_by_position(position)
             }
-        }
-    }
+            _ => format!("未知工具: {}", name),
+        };
+        
+        vec![mcp_sdk::Content::Text(result)]
+    });
+    
+    // 使用 SSE HTTP 传输层
+    info!("使用 SSE HTTP 传输层，端口: 8065");
+    let transport = SseServerTransport::new(8065);
+    server.connect(transport).await?;
     
     Ok(())
 }
 
-async fn handle_request(request: Value) -> Value {
-    let method = request["method"].as_str().unwrap_or("");
-    let id = request.get("id");
-    
-    match method {
-        "tools/list" => {
-            json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "result": {
-                    "tools": [
-                        {
-                            "name": "get_element",
-                            "description": "根据元素名称获取元素周期表元素信息",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "元素的中文名称，如'氢'、'氦'等"
-                                    }
-                                },
-                                "required": ["name"]
-                            }
-                        },
-                        {
-                            "name": "get_element_by_position",
-                            "description": "根据元素在周期表中的位置（原子序数）查询元素信息",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "position": {
-                                        "type": "number",
-                                        "description": "元素的原子序数，范围从1到118"
-                                    }
-                                },
-                                "required": ["position"]
-                            }
-                        }
-                    ]
-                }
-            })
-        }
-        "tools/call" => {
-            let params = &request["params"];
-            let tool_name = params["name"].as_str().unwrap_or("");
-            let arguments = &params["arguments"];
-            
-            let result = match tool_name {
-                "get_element" => {
-                    let name = arguments["name"].as_str().unwrap_or("");
-                    get_element_by_name(name)
-                }
-                "get_element_by_position" => {
-                    let position = arguments["position"].as_u64().unwrap_or(0) as u8;
-                    get_element_by_position(position)
-                }
-                _ => json!({
-                    "content": [{
-                        "type": "text",
-                        "text": format!("未知工具: {}", tool_name)
-                    }],
-                    "isError": true
-                })
-            };
-            
-            json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "result": result
-            })
-        }
-        "initialize" => {
-            json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "hello-mcp-rust",
-                        "version": "1.0.0"
-                    }
-                }
-            })
-        }
-        _ => {
-            json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "error": {
-                    "code": -32601,
-                    "message": format!("Method not found: {}", method)
-                }
-            })
-        }
-    }
-}
-
-fn get_element_by_name(name: &str) -> Value {
+fn get_element_by_name(name: &str) -> String {
     if name.is_empty() {
-        return json!({
-            "content": [{
-                "type": "text",
-                "text": "元素名称不能为空"
-            }],
-            "isError": true
-        });
+        return "元素名称不能为空".to_string();
     }
     
     if let Some(element) = PERIODIC_TABLE.iter().find(|e| e.name == name) {
-        json!({
-            "content": [{
-                "type": "text",
-                "text": format!(
-                    "元素名称: {} ({}, {}), 原子序数: {}, 符号: {}, 相对原子质量: {:.3}, 周期: {}, 族: {}",
-                    element.name,
-                    element.pronunciation,
-                    element.english_name,
-                    element.atomic_number,
-                    element.symbol,
-                    element.atomic_weight,
-                    element.period,
-                    element.group
-                )
-            }]
-        })
+        format!(
+            "元素名称: {} ({}, {}), 原子序数: {}, 符号: {}, 相对原子质量: {:.3}, 周期: {}, 族: {}",
+            element.name,
+            element.pronunciation,
+            element.english_name,
+            element.atomic_number,
+            element.symbol,
+            element.atomic_weight,
+            element.period,
+            element.group
+        )
     } else {
-        json!({
-            "content": [{
-                "type": "text",
-                "text": "元素不存在"
-            }],
-            "isError": true
-        })
+        "元素不存在".to_string()
     }
 }
 
-fn get_element_by_position(position: u8) -> Value {
+fn get_element_by_position(position: u8) -> String {
     if position < 1 || position > 118 {
-        return json!({
-            "content": [{
-                "type": "text",
-                "text": "原子序数必须在1-118之间"
-            }],
-            "isError": true
-        });
+        return "原子序数必须在1-118之间".to_string();
     }
     
     if let Some(element) = PERIODIC_TABLE.iter().find(|e| e.atomic_number == position) {
-        json!({
-            "content": [{
-                "type": "text",
-                "text": format!(
-                    "元素名称: {} ({}, {}), 原子序数: {}, 符号: {}, 相对原子质量: {:.3}, 周期: {}, 族: {}",
-                    element.name,
-                    element.pronunciation,
-                    element.english_name,
-                    element.atomic_number,
-                    element.symbol,
-                    element.atomic_weight,
-                    element.period,
-                    element.group
-                )
-            }]
-        })
+        format!(
+            "元素名称: {} ({}, {}), 原子序数: {}, 符号: {}, 相对原子质量: {:.3}, 周期: {}, 族: {}",
+            element.name,
+            element.pronunciation,
+            element.english_name,
+            element.atomic_number,
+            element.symbol,
+            element.atomic_weight,
+            element.period,
+            element.group
+        )
     } else {
-        json!({
-            "content": [{
-                "type": "text",
-                "text": "元素不存在"
-            }],
-            "isError": true
-        })
+        "元素不存在".to_string()
     }
 }

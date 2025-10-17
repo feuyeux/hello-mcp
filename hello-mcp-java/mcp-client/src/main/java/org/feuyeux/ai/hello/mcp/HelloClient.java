@@ -1,37 +1,76 @@
 package org.feuyeux.ai.hello.mcp;
 
 import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpSchema;
 import java.time.Duration;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * HelloClient类
  *
- * <p>此类负责创建与MCP服务器的连接，用于调用元素周期表相关的工具。 使用WebFluxSseClientTransport实现基于SSE（Server-Sent Events）的MCP通信。
+ * <p>此类负责创建与MCP服务器的连接，用于调用元素周期表相关的工具。 使用 HTTP 客户端连接到 WebFlux 服务端。
  */
 @Slf4j
 public class HelloClient {
 
-  /**
-   * 构建HelloMCP客户端
-   *
-   * <p>此方法创建一个同步MCP客户端，连接到本地运行的服务器。 设置了10秒的请求超时时间，确保在网络延迟时能够适当响应。
-   *
-   * @return McpSyncClient 配置好的同步MCP客户端实例
-   */
-  public static McpSyncClient buildHelloClient() {
-    // 创建基于SSE的传输层，连接到本地8061端口
-    var transport =
-        new WebFluxSseClientTransport(WebClient.builder().baseUrl("http://localhost:8061"));
-    // 构建同步MCP客户端，设置10秒超时
-    McpSyncClient mcpClient =
-        McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
-    // 初始化客户端连接
-    var init = mcpClient.initialize();
-    log.info("MCP Initialized: {}", init);
-    return mcpClient;
+  private static final String BASE_URL = "http://localhost:9900";
+  private static final HttpClientStreamableHttpTransport transport =
+      HttpClientStreamableHttpTransport.builder(BASE_URL).endpoint("hello-mcp").build();
+
+  public static McpSchema.ListToolsResult listToolsResult() {
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
+      client.initialize();
+      return client.listTools();
+    }
+  }
+
+  public static String listTools() {
+    var result = listToolsResult();
+    StringBuilder toolsList = new StringBuilder();
+    for (var tool : result.tools()) {
+      toolsList
+          .append("工具名称: ")
+          .append(tool.name())
+          .append(", 描述: ")
+          .append(tool.description())
+          .append("\n");
+    }
+
+    log.debug("列举工具成功: {}", toolsList);
+    return toolsList.toString();
+  }
+
+  public static String getElement(String name) {
+    log.debug("查询元素: {}", name);
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
+      client.initialize();
+      McpSchema.CallToolResult result =
+          client.callTool(
+              McpSchema.CallToolRequest.builder()
+                  .name("getElement")
+                  .arguments(Map.of("name", name))
+                  .build());
+
+      log.debug("查询元素 {} 成功: {}", name, result.content());
+      return result.content().toString();
+    }
+  }
+
+  public static String getElementByPosition(int position) {
+    log.debug("查询位置元素: {}", position);
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
+      client.initialize();
+      McpSchema.CallToolResult result =
+          client.callTool(
+              McpSchema.CallToolRequest.builder()
+                  .name("getElementByPosition")
+                  .arguments(Map.of("position", position))
+                  .build());
+
+      log.debug("查询位置元素 {} 成功: {}", position, result.content());
+      return result.content().toString();
+    }
   }
 }

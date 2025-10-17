@@ -13,23 +13,27 @@ let package = Package(
         .library(name: "HelloMCPCore", targets: ["HelloMCPCore"])
     ],
     dependencies: [
-        // Removing external dependency due to network issues
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "1.0.0")
     ],
     targets: [
         .target(
             name: "HelloMCPCore",
-            dependencies: []
+            dependencies: [
+                .product(name: "ModelContextProtocol", package: "swift-sdk")
+            ]
         ),
         .executableTarget(
             name: "HelloMCPServer",
             dependencies: [
-                "HelloMCPCore"
+                "HelloMCPCore",
+                .product(name: "ModelContextProtocol", package: "swift-sdk")
             ]
         ),
         .executableTarget(
             name: "HelloMCPClient",
             dependencies: [
-                "HelloMCPCore"
+                "HelloMCPCore",
+                .product(name: "ModelContextProtocol", package: "swift-sdk")
             ]
         ),
         .testTarget(

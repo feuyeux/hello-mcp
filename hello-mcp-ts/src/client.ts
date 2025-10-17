@@ -1,18 +1,13 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { spawn } from "child_process";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 
 async function testMcpClient() {
-  // 启动MCP服务器
-  const serverProcess = spawn("tsx", ["src/server.ts"], {
-    stdio: ["pipe", "pipe", "inherit"],
-  });
+  console.log("=== 测试 MCP 客户端 ===");
 
-  // 创建客户端传输
-  const transport = new StdioClientTransport({
-    reader: serverProcess.stdout!,
-    writer: serverProcess.stdin!,
-  });
+  // 使用 SSE HTTP 传输层
+  const transport = new SSEClientTransport(
+    new URL("http://localhost:3000/sse")
+  );
 
   const client = new Client(
     {
@@ -52,7 +47,6 @@ async function testMcpClient() {
     console.error("测试失败:", error);
   } finally {
     await client.close();
-    serverProcess.kill();
   }
 }
 

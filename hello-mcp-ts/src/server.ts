@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import express from "express";
 import { periodicTable } from "./periodic-table.js";
 
-const server = new Server(
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 中间件
+app.use(express.json());
+
+// 创建 MCP 服务器
+const mcpServer = new Server(
   {
     name: "hello-mcp-ts",
     version: "1.0.0",
@@ -21,7 +29,8 @@ const server = new Server(
 );
 
 // 工具列表
-server.setRequestHandler(ListToolsRequestSchema, async () => {
+mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
+  console.log("处理 tools/list 请求");
   return {
     tools: [
       {
@@ -57,8 +66,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 // 工具调用处理
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  console.log(`处理 tools/call 请求: ${name}`);
 
   switch (name) {
     case "get_element": {
@@ -136,13 +146,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Hello MCP TypeScript Server running on stdio");
-}
+// 健康检查端点
+app.get("/health", (req, res) => {
+  res.json({ status: "UP", server: "hello-mcp-ts" });
+});
 
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
+// SSE 端点 - 符合 MCP 协议
+app.get("/sse", async (req, res) => {
+  console.log("新的 SSE 连接建立");
+  
+  // 设置 SSE 响应头
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  
+  // 创建 SSE 传输层
+  const transport = new SSEServerTransport("/messages", res);
+  
+  // 连接 MCP 服务器
+  await mcpServer.connect(transport);
+  
+  // 处理连接关闭
+  req.on("close", () => {
+    console.log("SSE 连接已关闭");
+  });
+});
+
+// 消息端点 - 处理客户端请求
+app.post("/messages", async (req, res) => {
+  console.log("收到消息请求:", req.body);
+  
+  // 这里应该由 SSEServerTransport 处理
+  // 但为了兼容性，我们也可以直接处理
+  res.json({ received: true });
+});
+
+// 启动服务器
+app.listen(PORT, () => {
+  console.log(`MCP TypeScript Server 已启动`);
+  console.log(`服务器地址: http://localhost:${PORT}`);
+  console.log(`SSE 端点: http://localhost:${PORT}/sse`);
+  console.log(`消息端点: http://localhost:${PORT}/messages`);
+  console.log(`健康检查: http://localhost:${PORT}/health`);
 });

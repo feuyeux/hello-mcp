@@ -1,7 +1,5 @@
-use serde_json::{json, Value};
-use std::process::Stdio;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::process::Command as TokioCommand;
+use mcp_sdk::client::Client;
+use mcp_sdk::transport::SseClientTransport;
 use tracing::info;
 
 #[tokio::main]
@@ -10,120 +8,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     info!("Hello MCP Rust Client starting...");
     
-    // 启动服务器进程
-    let mut server = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "server"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .spawn()?;
+    // 创建客户端
+    let mut client = Client::new("hello-mcp-client", "1.0.0");
     
-    let mut server_stdin = server.stdin.take().unwrap();
-    let server_stdout = server.stdout.take().unwrap();
-    let mut reader = BufReader::new(server_stdout);
+    // 使用 SSE HTTP 传输层连接
+    info!("连接到服务器: http://localhost:8065");
+    let transport = SseClientTransport::new("http://localhost:8065")?;
+    client.connect(transport).await?;
     
     // 初始化
-    let init_request = json!({
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "initialize",
-        "params": {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {
-                "name": "hello-mcp-client",
-                "version": "1.0.0"
-            }
-        }
-    });
+    let init_result = client.initialize().await?;
+    info!("服务器: {}", init_result.server_info.name);
     
-    send_request(&mut server_stdin, &init_request).await?;
-    let _init_response = read_response(&mut reader).await?;
-    
-    // 测试获取工具列表
-    println!("=== 测试获取工具列表 ===");
-    let list_tools_request = json!({
-        "jsonrpc": "2.0",
-        "id": 2,
-        "method": "tools/list"
-    });
-    
-    send_request(&mut server_stdin, &list_tools_request).await?;
-    let tools_response = read_response(&mut reader).await?;
-    
-    if let Some(tools) = tools_response["result"]["tools"].as_array() {
-        let tool_names: Vec<String> = tools
-            .iter()
-            .filter_map(|tool| tool["name"].as_str())
-            .map(|name| name.to_string())
-            .collect();
-        println!("可用工具: {:?}", tool_names);
+    // 列出工具
+    info!("\n=== 列出工具 ===");
+    let tools = client.list_tools().await?;
+    for tool in &tools.tools {
+        info!("  - {}: {}", tool.name, tool.description);
     }
     
-    // 测试根据名称获取元素
-    println!("\n=== 测试根据名称获取元素 ===");
-    let get_element_request = json!({
-        "jsonrpc": "2.0",
-        "id": 3,
-        "method": "tools/call",
-        "params": {
-            "name": "get_element",
-            "arguments": {
-                "name": "硅"
-            }
-        }
-    });
+    // 测试查询元素
+    info!("\n=== 测试查询元素 ===");
+    let result = client.call_tool("get_element", serde_json::json!({"name": "硅"})).await?;
+    info!("硅元素: {:?}", result.content);
     
-    send_request(&mut server_stdin, &get_element_request).await?;
-    let element_response = read_response(&mut reader).await?;
+    let result = client.call_tool("get_element_by_position", serde_json::json!({"position": 14})).await?;
+    info!("第14号元素: {:?}", result.content);
     
-    if let Some(content) = element_response["result"]["content"][0]["text"].as_str() {
-        println!("硅元素信息: {}", content);
-    }
-    
-    // 测试根据位置获取元素
-    println!("\n=== 测试根据位置获取元素 ===");
-    let get_element_by_pos_request = json!({
-        "jsonrpc": "2.0",
-        "id": 4,
-        "method": "tools/call",
-        "params": {
-            "name": "get_element_by_position",
-            "arguments": {
-                "position": 14
-            }
-        }
-    });
-    
-    send_request(&mut server_stdin, &get_element_by_pos_request).await?;
-    let element_by_pos_response = read_response(&mut reader).await?;
-    
-    if let Some(content) = element_by_pos_response["result"]["content"][0]["text"].as_str() {
-        println!("第14号元素信息: {}", content);
-    }
-    
-    // 关闭服务器
-    server.kill().await?;
+    client.close().await?;
     
     Ok(())
-}
-
-async fn send_request(
-    stdin: &mut tokio::process::ChildStdin,
-    request: &Value,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let request_str = serde_json::to_string(request)?;
-    stdin.write_all(request_str.as_bytes()).await?;
-    stdin.write_all(b"\n").await?;
-    stdin.flush().await?;
-    Ok(())
-}
-
-async fn read_response(
-    reader: &mut BufReader<tokio::process::ChildStdout>,
-) -> Result<Value, Box<dyn std::error::Error>> {
-    let mut line = String::new();
-    reader.read_line(&mut line).await?;
-    let response: Value = serde_json::from_str(&line)?;
-    Ok(response)
 }
