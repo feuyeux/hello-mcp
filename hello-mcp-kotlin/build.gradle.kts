@@ -38,7 +38,7 @@ repositories {
 
 val mcpVersion = "1.0.0"
 val slf4jVersion = "2.0.17"
-val ktorVersion = "3.1.1"
+val ktorVersion = "3.3.1"
 val kotlinxCoroutinesVersion = "2.0.21-coroutines-KBA-001"
 
 dependencies {
