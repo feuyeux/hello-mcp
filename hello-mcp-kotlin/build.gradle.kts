@@ -1,8 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.2.20"
-    kotlin("plugin.serialization") version "2.1.20"
-    application
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 group = "org.feuyeux.ai"
@@ -36,77 +34,77 @@ repositories {
     gradlePluginPortal()
 }
 
-val mcpVersion = "1.0.0"
+// 版本管理
+val mcpSdkVersion = "0.14.1"  // Java MCP SDK (compatible with Kotlin)
+val ktorVersion = "3.0.3"
 val slf4jVersion = "2.0.17"
-val ktorVersion = "3.1.1"
-val kotlinxCoroutinesVersion = "2.0.21-coroutines-KBA-001"
+val kotlinxCoroutinesVersion = "1.10.1"
+val junitVersion = "5.11.4"
 
-dependencies {
-    // Kotlin standard library and coroutines
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-
-    // Official Kotlin MCP SDK
-    implementation("io.modelcontextprotocol:kotlin-sdk:$mcpVersion")
+// 所有子项目的公共配置
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
     
-    // Logging
-    implementation("org.slf4j:slf4j-nop:$slf4jVersion")
-    implementation("io.github.oshai:kotlin-logging-jvm:7.0.13")
+    repositories {
+        maven {
+            name = "Aliyun"
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
+        maven {
+            name = "Aliyun Central"
+            url = uri("https://maven.aliyun.com/repository/central")
+        }
+        maven {
+            name = "Aliyun JCenter"
+            url = uri("https://maven.aliyun.com/repository/jcenter")
+        }
+        maven {
+            name = "Tencent"
+            url = uri("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
+        }
+        maven {
+            name = "Huawei"
+            url = uri("https://repo.huaweicloud.com/repository/maven/")
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
     
-    // Ktor for HTTP client/server if needed
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    implementation("io.ktor:ktor-server-cio:$ktorVersion")
-    implementation("io.ktor:ktor-server-sse:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    dependencies {
+        // Kotlin standard library and coroutines
+        add("implementation", "org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        add("implementation", "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion")
+        add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+        
+        // MCP Java SDK (works perfectly with Kotlin)
+        add("implementation", "io.modelcontextprotocol.sdk:mcp:$mcpSdkVersion")
+        
+        // Ktor for HTTP server (server only)
+        add("implementation", "io.ktor:ktor-server-core:$ktorVersion")
+        add("implementation", "io.ktor:ktor-server-netty:$ktorVersion")
+        add("implementation", "io.ktor:ktor-server-content-negotiation:$ktorVersion")
+        add("implementation", "io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+        
+        // Jackson for JSON processing (for Ollama client)
+        add("implementation", "com.fasterxml.jackson.core:jackson-databind:2.18.2")
+        
+        // Logging
+        add("implementation", "org.slf4j:slf4j-api:$slf4jVersion")
+        add("implementation", "ch.qos.logback:logback-classic:1.5.18")
+        add("implementation", "io.github.oshai:kotlin-logging-jvm:7.0.13")
+        
+        // Test dependencies
+        add("testImplementation", kotlin("test"))
+        add("testImplementation", "org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesVersion")
+        add("testImplementation", "org.junit.jupiter:junit-jupiter:$junitVersion")
+    }
     
-    // Test dependencies
-    testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesVersion")
-    testImplementation("io.mockk:mockk:1.13.17")
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(21)
-}
-
-application {
-    mainClass.set("org.feuyeux.ai.hello.HelloMcpApplication")
-}
-
-tasks.register<JavaExec>("runClient") {
-    group = "application"
-    description = "Run the MCP client with element query"
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("org.feuyeux.ai.hello.HelloMcpApplication")
-    args("client", "氢")
-}
-
-tasks.register<JavaExec>("runServer") {
-    group = "application"
-    description = "Run the MCP server"
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("org.feuyeux.ai.hello.HelloMcpApplication")
-    args("server")
-}
-
-tasks.register<JavaExec>("runTest") {
-    group = "application"
-    description = "Run MCP client test"
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("org.feuyeux.ai.hello.HelloMcpApplication")
-    args("test")
-}
-
-tasks.register<JavaExec>("runPeriodicTableServer") {
-    group = "application"
-    description = "Run periodic table MCP server directly"
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("org.feuyeux.ai.hello.PeriodicTableServerKt")
+    tasks.test {
+        useJUnitPlatform()
+    }
+    
+    kotlin {
+        jvmToolchain(21)
+    }
 }

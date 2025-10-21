@@ -1,12 +1,12 @@
 package org.feuyeux.ai.hello;
 
+import static org.feuyeux.ai.hello.utils.DotEnv.loadEnv;
+
 import lombok.extern.slf4j.Slf4j;
 import org.feuyeux.ai.hello.mcp.HelloClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.feuyeux.ai.hello.utils.DotEnv.loadEnv;
 
 /**
  * MCP测试套件
@@ -19,6 +19,17 @@ public class HelloMcpTests {
   @BeforeAll
   public static void init() {
     loadEnv();
+    // 支持通过系统属性设置端口: -Dmcp.server.port=9900
+    String portStr = System.getProperty("mcp.server.port");
+    if (portStr != null && !portStr.isEmpty()) {
+      try {
+        int port = Integer.parseInt(portStr);
+        HelloClient.setServerPort(port);
+        log.info("使用系统属性指定的端口: {}", port);
+      } catch (NumberFormatException e) {
+        log.warn("无效的端口号: {}, 使用默认端口", portStr);
+      }
+    }
   }
 
   @Test

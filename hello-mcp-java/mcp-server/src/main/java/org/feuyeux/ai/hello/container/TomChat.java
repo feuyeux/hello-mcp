@@ -39,13 +39,14 @@ public class TomChat {
     context.addChild(wrapper);
     context.addServletMappingDecoded("/*", "mcpServlet");
 
+    // Add UTF-8 encoding filter
     var filterDef = new FilterDef();
-    filterDef.setFilterClass(HelloMcpServletFilter.class.getName());
-    filterDef.setFilterName(HelloMcpServletFilter.class.getSimpleName());
+    filterDef.setFilter(new Utf8EncodingFilter());
+    filterDef.setFilterName("Utf8EncodingFilter");
     context.addFilterDef(filterDef);
 
     var filterMap = new FilterMap();
-    filterMap.setFilterName(HelloMcpServletFilter.class.getSimpleName());
+    filterMap.setFilterName("Utf8EncodingFilter");
     filterMap.addURLPattern("/*");
     context.addFilterMap(filterMap);
 

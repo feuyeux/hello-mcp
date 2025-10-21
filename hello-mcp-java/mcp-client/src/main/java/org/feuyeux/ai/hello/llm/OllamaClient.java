@@ -11,6 +11,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.feuyeux.ai.hello.mcp.HelloClient;
 
@@ -59,8 +61,8 @@ public class OllamaClient {
       ArrayNode messagesArray = requestBody.putArray("messages");
       for (Message msg : messages) {
         ObjectNode msgNode = messagesArray.addObject();
-        msgNode.put("role", msg.getRole());
-        msgNode.put("content", msg.getContent());
+        msgNode.put("role", msg.role());
+        msgNode.put("content", msg.content());
       }
       List<McpSchema.Tool> toolList = tools.tools();
       ArrayNode toolsArray = requestBody.putArray("tools");
@@ -162,75 +164,23 @@ public class OllamaClient {
   }
 
   /** 消息类 */
-  public static class Message {
-    private String role;
-    private String content;
-
-    public Message(String role, String content) {
-      this.role = role;
-      this.content = content;
-    }
-
-    public String getRole() {
-      return role;
-    }
-
-    public String getContent() {
-      return content;
-    }
-  }
+  public record Message(String role, String content) {}
 
   /** 工具调用类 */
+  @Setter
+  @Getter
   public static class ToolCall {
     private String name;
     private java.util.Map<String, Object> arguments;
-
-    public String getName() {
-      return name;
-    }
-
-    public void setName(String name) {
-      this.name = name;
-    }
-
-    public java.util.Map<String, Object> getArguments() {
-      return arguments;
-    }
-
-    public void setArguments(java.util.Map<String, Object> arguments) {
-      this.arguments = arguments;
-    }
   }
 
   /** 聊天响应类 */
+  @Setter
+  @Getter
   public static class ChatResponse {
     private String role;
     private String content;
     private List<ToolCall> toolCalls;
-
-    public String getRole() {
-      return role;
-    }
-
-    public void setRole(String role) {
-      this.role = role;
-    }
-
-    public String getContent() {
-      return content;
-    }
-
-    public void setContent(String content) {
-      this.content = content;
-    }
-
-    public List<ToolCall> getToolCalls() {
-      return toolCalls;
-    }
-
-    public void setToolCalls(List<ToolCall> toolCalls) {
-      this.toolCalls = toolCalls;
-    }
 
     public boolean hasToolCalls() {
       return toolCalls != null && !toolCalls.isEmpty();

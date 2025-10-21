@@ -190,3 +190,5 @@ Thumbs.db
 /hello-mcp-swift/.build/
 /hello-mcp-kotlin/gradlew
 /hello-mcp-kotlin/gradlew.bat
+.kiro
+.kotlin

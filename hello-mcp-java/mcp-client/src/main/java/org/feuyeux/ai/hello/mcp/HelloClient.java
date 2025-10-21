@@ -15,9 +15,37 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class HelloClient {
 
-  private static final String BASE_URL = "http://localhost:9900";
-  private static final HttpClientStreamableHttpTransport transport =
-      HttpClientStreamableHttpTransport.builder(BASE_URL).endpoint("hello-mcp").build();
+  private static int serverPort = 9900; // 默认端口
+  private static HttpClientStreamableHttpTransport transport;
+
+  static {
+    initTransport();
+  }
+
+  /**
+   * 设置服务器端口
+   *
+   * @param port 服务器端口号
+   */
+  public static void setServerPort(int port) {
+    serverPort = port;
+    initTransport();
+    log.info("客户端连接端口已设置为: {}", port);
+  }
+
+  /**
+   * 获取当前服务器端口
+   *
+   * @return 当前端口号
+   */
+  public static int getServerPort() {
+    return serverPort;
+  }
+
+  private static void initTransport() {
+    String baseUrl = "http://localhost:" + serverPort;
+    transport = HttpClientStreamableHttpTransport.builder(baseUrl).endpoint("mcp").build();
+  }
 
   public static McpSchema.ListToolsResult listToolsResult() {
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {

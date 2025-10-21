@@ -11,4 +11,5 @@ else
   export JAVA_HOME=/d/zoo/jdk-21.0.3
 fi
 
-mvn spring-boot:run
+# 运行测试
+mvn test
