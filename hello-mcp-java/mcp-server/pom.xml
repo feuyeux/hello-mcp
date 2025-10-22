@@ -61,7 +61,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.6.2</version>
                 <configuration>
                     <mainClass>org.feuyeux.ai.hello.HelloMcpServer</mainClass>
                     <!-- 不要在这里硬编码 arguments，使用 -Dexec.args 从命令行传递 -->
