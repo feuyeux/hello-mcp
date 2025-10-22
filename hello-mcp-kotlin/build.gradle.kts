@@ -28,14 +28,14 @@ repositories {
         name = "Huawei"
         url = uri("https://repo.huaweicloud.com/repository/maven/")
     }
-    
+
     // 备用官方仓库
     mavenCentral()
     gradlePluginPortal()
 }
 
 // 版本管理
-val mcpSdkVersion = "0.14.1"  // Java MCP SDK (compatible with Kotlin)
+val mcpKotlinSdkVersion = "0.7.2"  // Kotlin MCP SDK
 val ktorVersion = "3.0.3"
 val slf4jVersion = "2.0.17"
 val kotlinxCoroutinesVersion = "1.10.1"
@@ -45,7 +45,7 @@ val junitVersion = "5.11.4"
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
-    
+
     repositories {
         maven {
             name = "Aliyun"
@@ -70,40 +70,46 @@ subprojects {
         mavenCentral()
         gradlePluginPortal()
     }
-    
+
     dependencies {
         // Kotlin standard library and coroutines
         add("implementation", "org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         add("implementation", "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion")
         add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-        
-        // MCP Java SDK (works perfectly with Kotlin)
-        add("implementation", "io.modelcontextprotocol.sdk:mcp:$mcpSdkVersion")
-        
-        // Ktor for HTTP server (server only)
+
+        // MCP Kotlin SDK
+        add("implementation", "io.modelcontextprotocol:kotlin-sdk-core:$mcpKotlinSdkVersion")
+        add("implementation", "io.modelcontextprotocol:kotlin-sdk-client:$mcpKotlinSdkVersion")
+        add("implementation", "io.modelcontextprotocol:kotlin-sdk-server:$mcpKotlinSdkVersion")
+
+        // Ktor for HTTP server
         add("implementation", "io.ktor:ktor-server-core:$ktorVersion")
         add("implementation", "io.ktor:ktor-server-netty:$ktorVersion")
         add("implementation", "io.ktor:ktor-server-content-negotiation:$ktorVersion")
         add("implementation", "io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-        
+
+        // Ktor for HTTP client
+        add("implementation", "io.ktor:ktor-client-core:$ktorVersion")
+        add("implementation", "io.ktor:ktor-client-cio:$ktorVersion")
+
         // Jackson for JSON processing (for Ollama client)
         add("implementation", "com.fasterxml.jackson.core:jackson-databind:2.18.2")
-        
+
         // Logging
         add("implementation", "org.slf4j:slf4j-api:$slf4jVersion")
         add("implementation", "ch.qos.logback:logback-classic:1.5.18")
         add("implementation", "io.github.oshai:kotlin-logging-jvm:7.0.13")
-        
+
         // Test dependencies
         add("testImplementation", kotlin("test"))
         add("testImplementation", "org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesVersion")
         add("testImplementation", "org.junit.jupiter:junit-jupiter:$junitVersion")
     }
-    
+
     tasks.test {
         useJUnitPlatform()
     }
-    
+
     kotlin {
         jvmToolchain(21)
     }

@@ -1,7 +1,5 @@
 package org.feuyeux.ai.hello.utils
 
-import java.io.File
-
 /**
  * NPX工具类
  * 提供与npm/npx相关的工具方法

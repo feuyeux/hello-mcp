@@ -1,6 +1,7 @@
 package org.feuyeux.ai.hello
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import org.feuyeux.ai.hello.llm.OllamaClient
 import org.feuyeux.ai.hello.mcp.HelloClient
 import org.feuyeux.ai.hello.utils.DotEnv.loadEnv
@@ -24,6 +25,9 @@ class LlmMcpIntegrationTest {
         @BeforeAll
         fun init() {
             loadEnv()
+            runBlocking {
+                HelloClient.getHelloClient()
+            }
             ollamaClient = OllamaClient()
             logger.info { "初始化 Ollama 客户端完成" }
         }
@@ -32,15 +36,14 @@ class LlmMcpIntegrationTest {
     @Test
     @DisplayName("测试 LLM 通过工具调用查询元素")
     fun testLlmWithMcpTools() {
-        try {
-            logger.info { "=== 测试: LLM 通过工具调用查询元素 ===" }
-            
-            val messages = mutableListOf<OllamaClient.Message>()
-            val query = "请帮我查询氢元素的详细信息，包括原子序数、符号和相对原子质量"
-            messages.add(OllamaClient.Message("user", query))
-            
+        logger.info { "=== 测试: LLM 通过工具调用查询元素 ===" }
+
+        val messages = mutableListOf<OllamaClient.Message>()
+        val query = "请帮我查询氢元素的详细信息，包括原子序数、符号和相对原子质量"
+        messages.add(OllamaClient.Message("user", query))
+        runBlocking {
             val tools = HelloClient.listToolsResult()
-            
+
             logger.info { "第一次调用 LLM: $query" }
             val response = ollamaClient.chat(messages, tools)
 
@@ -74,14 +77,6 @@ class LlmMcpIntegrationTest {
             } else {
                 logger.warn { "LLM 没有调用工具，直接返回了答案: ${response.content}" }
                 logger.info { "这可能是因为 LLM 已经知道答案，或者不支持工具调用" }
-            }
-
-        } catch (e: Exception) {
-            logger.error(e) { "测试失败" }
-            logger.info {
-                "提示：请确保 Ollama 已启动并且 qwen2.5:latest 模型已下载\n" +
-                        "启动命令: ollama serve\n" +
-                        "下载模型: ollama pull qwen2.5:latest"
             }
         }
     }

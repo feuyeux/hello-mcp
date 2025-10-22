@@ -19,4 +19,5 @@ Client
 ```sh
 gradle :mcp-client:test
 gradle :mcp-client:test --tests HelloMcpTests.testHelloMcpByName
+gradle :mcp-client:test --tests LlmMcpIntegrationTest.testLlmWithMcpTools
 ```

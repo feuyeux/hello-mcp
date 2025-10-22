@@ -95,7 +95,7 @@ object DotEnv {
         // 搜索.env文件
         var path: Path? = Paths.get(".").toAbsolutePath()
         val maxDepth = 5 // 限制递归深度，避免无限循环
-        
+
         repeat(maxDepth) {
             path?.let { currentPath ->
                 val filePath = currentPath.resolve(".env")
@@ -115,7 +115,7 @@ object DotEnv {
                 path = currentPath.parent
             }
         }
-        
+
         throw RuntimeException("No .env file found within $maxDepth levels of directory hierarchy!")
     }
 }

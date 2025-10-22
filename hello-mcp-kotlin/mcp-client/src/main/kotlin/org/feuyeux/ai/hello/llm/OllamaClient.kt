@@ -1,10 +1,10 @@
 package org.feuyeux.ai.hello.llm
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.modelcontextprotocol.spec.McpSchema
+import io.modelcontextprotocol.kotlin.sdk.ListToolsResult
+import kotlinx.coroutines.runBlocking
 import org.feuyeux.ai.hello.mcp.HelloClient
 import java.net.URI
 import java.net.http.HttpClient
@@ -37,7 +37,7 @@ class OllamaClient(
      * @param tools 可用工具列表
      * @return 响应消息
      */
-    fun chat(messages: List<Message>, tools: McpSchema.ListToolsResult): ChatResponse {
+    fun chat(messages: List<Message>, tools: ListToolsResult): ChatResponse {
         try {
             logger.debug { "发送聊天请求到 Ollama: model=$model, messages=${messages.size}" }
 
@@ -54,15 +54,67 @@ class OllamaClient(
             }
 
             // 添加工具
-            val toolList = tools.tools()
+            val toolList = tools.tools
             val toolsArray = requestBody.putArray("tools")
             for (tool in toolList) {
                 val toolNode = toolsArray.addObject()
                 toolNode.put("type", "function")
                 val functionNode = toolNode.putObject("function")
-                functionNode.put("name", tool.name())
-                functionNode.put("description", tool.description())
-                functionNode.set<ObjectNode>("parameters", objectMapper.valueToTree(tool.meta()))
+                functionNode.put("name", tool.name)
+                functionNode.put("description", tool.description)
+                
+                // 直接使用 inputSchema，让 Jackson 自动序列化
+                // 但需要手动构建正确的格式
+                val parametersNode = functionNode.putObject("parameters")
+                parametersNode.put("type", "object")
+                
+                // 构建 properties
+                val propertiesNode = parametersNode.putObject("properties")
+                tool.inputSchema.properties?.forEach { (propName, propValue) ->
+                    val propNode = propertiesNode.putObject(propName)
+                    
+                    // 将 JsonElement 转换为 Map 以便访问
+                    val propJson = propValue.toString()
+                    val propMap = objectMapper.readValue(propJson, Map::class.java) as Map<String, Any>
+                    
+                    // 提取 type 和 description
+                    propMap.forEach { (key, value) ->
+                        when (key) {
+                            "type" -> {
+                                // type 可能是 JsonPrimitive，需要提取其内容
+                                val typeValue = if (value is Map<*, *>) {
+                                    (value as Map<String, Any>)["content"] as? String ?: value.toString()
+                                } else {
+                                    value.toString()
+                                }
+                                propNode.put("type", typeValue)
+                            }
+                            "description" -> {
+                                // description 也可能是 JsonPrimitive
+                                val descValue = if (value is Map<*, *>) {
+                                    (value as Map<String, Any>)["content"] as? String ?: value.toString()
+                                } else {
+                                    value.toString()
+                                }
+                                propNode.put("description", descValue)
+                            }
+                            else -> {
+                                // 其他属性直接添加
+                                when (value) {
+                                    is String -> propNode.put(key, value)
+                                    is Number -> propNode.put(key, value.toInt())
+                                    is Boolean -> propNode.put(key, value)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 添加 required 字段
+                tool.inputSchema.required?.let { required ->
+                    val requiredArray = parametersNode.putArray("required")
+                    required.forEach { requiredArray.add(it) }
+                }
             }
 
             val requestJson = objectMapper.writeValueAsString(requestBody)
@@ -120,28 +172,31 @@ class OllamaClient(
     fun executeToolCall(toolCall: ToolCall): String {
         try {
             logger.info { "执行工具调用: ${toolCall.name}, 参数: ${toolCall.arguments}" }
-
-            val result = when (toolCall.name) {
-                "getElement" -> {
-                    // Ollama 可能返回 "name" 或 "elementName"
-                    val name = (toolCall.arguments["name"] ?: toolCall.arguments["elementName"]) as? String
-                        ?: throw IllegalArgumentException("缺少参数 name 或 elementName")
-                    HelloClient.getElement(name)
-                }
-                "getElementByPosition" -> {
-                    val position = when (val positionObj = toolCall.arguments["position"]) {
-                        is Int -> positionObj
-                        is Double -> positionObj.toInt()
-                        else -> positionObj.toString().toInt()
+            val result: String
+            runBlocking {
+                result = when (toolCall.name) {
+                    "getElement" -> {
+                        // Ollama 可能返回 "name" 或 "elementName"
+                        val name = (toolCall.arguments["name"] ?: toolCall.arguments["elementName"]) as? String
+                            ?: throw IllegalArgumentException("缺少参数 name 或 elementName")
+                        HelloClient.getElement(name)
                     }
-                    HelloClient.getElementByPosition(position)
+
+                    "getElementByPosition" -> {
+                        val position = when (val positionObj = toolCall.arguments["position"]) {
+                            is Int -> positionObj
+                            is Double -> positionObj.toInt()
+                            else -> positionObj.toString().toInt()
+                        }
+                        HelloClient.getElementByPosition(position)
+                    }
+
+                    else -> "{\"error\": \"未知工具: ${toolCall.name}\"}"
                 }
-                else -> "{\"error\": \"未知工具: ${toolCall.name}\"}"
+
+                logger.info { "工具调用结果: $result" }
             }
-
-            logger.info { "工具调用结果: $result" }
             return result
-
         } catch (e: Exception) {
             logger.error(e) { "工具调用失败" }
             return "{\"error\": \"${e.message}\"}"

@@ -1,6 +1,7 @@
 package org.feuyeux.ai.hello
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import org.feuyeux.ai.hello.mcp.HelloClient
 import org.feuyeux.ai.hello.utils.DotEnv.loadEnv
 import org.junit.jupiter.api.BeforeAll
@@ -24,27 +25,36 @@ class HelloMcpTests {
         @BeforeAll
         fun init() {
             loadEnv()
+            runBlocking {
+                HelloClient.getHelloClient()
+            }
         }
     }
 
     @Test
     @DisplayName("列举Hello MCP工具")
     fun testListTools() {
-        val tools = HelloClient.listTools()
-        logger.info { "列举到的工具: \n$tools" }
+        runBlocking {
+            val tools = HelloClient.listTools()
+            logger.info { "列举到的工具: \n$tools" }
+        }
     }
 
     @Test
     @DisplayName("测试Hello MCP - 按名称查询")
     fun testHelloMcpByName() {
-        val result = HelloClient.getElement("氢")
-        logger.info { "查询氢元素结果: $result" }
+        runBlocking {
+            val result = HelloClient.getElement("氢")
+            logger.info { "查询氢元素结果: $result" }
+        }
     }
 
     @Test
     @DisplayName("测试MCP工具调用 - 按位置查询")
     fun testMcpToolByPosition() {
-        val result = HelloClient.getElementByPosition(6)
-        logger.info { "查询原子序数为6的元素结果: $result" }
+        runBlocking {
+            val result = HelloClient.getElementByPosition(6)
+            logger.info { "查询原子序数为6的元素结果: $result" }
+        }
     }
 }

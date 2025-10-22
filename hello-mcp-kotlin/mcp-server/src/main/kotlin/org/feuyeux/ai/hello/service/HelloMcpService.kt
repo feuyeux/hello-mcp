@@ -12,15 +12,15 @@ private val logger = KotlinLogging.logger {}
  * 包含了完整的元素周期表数据和查询接口，支持按名称和序号查询元素信息。
  */
 class HelloMcpService {
-    
+
     companion object {
         /** 存储所有元素周期表元素的列表 该列表在静态初始化块中被填充，包含了所有已知化学元素 */
         private val elements = mutableListOf<Element>()
-        
+
         init {
             initializePeriodicTable()
         }
-        
+
         /** 初始化元素周期表数据 按照最新的Element结构填充元素数据，包括元素的原子序数、符号、中文名称、 读音、英文名称、相对原子质量、周期和族等信息 */
         private fun initializePeriodicTable() {
             // 周期1（2种）
@@ -156,13 +156,13 @@ class HelloMcpService {
             elements.add(Element(118, "Og", "鿫", "ào", "Oganesson", 294.0, 7, "0族"))
         }
     }
-    
+
     fun getElement(name: String): String {
         logger.info { "获取元素周期表元素信息: $name" }
         if (name.isEmpty()) {
             return "元素名称不能为空"
         }
-        
+
         return elements.firstOrNull { element ->
             val matchName = element.name == name
             val matchEnglish = element.englishName.equals(name, ignoreCase = true)
@@ -183,13 +183,13 @@ class HelloMcpService {
             "元素不存在"
         }
     }
-    
+
     fun getElementByPosition(position: Int): String {
         logger.info { "获取元素周期表第${position}个元素的信息" }
         if (position <= 0 || position > elements.size) {
             return "元素位置无效，应在1到${elements.size}之间"
         }
-        
+
         // 通过原子序数（周期表中的位置）查找元素
         return elements.firstOrNull { element ->
             element.atomicNumber == position
