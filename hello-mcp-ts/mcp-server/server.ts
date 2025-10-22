@@ -1,24 +1,21 @@
 #!/usr/bin/env node
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import express from "express";
-import { periodicTable } from "./periodic-table.js";
+import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
+import { periodicTable } from "./periodic_table.js";
 
-const app = express();
 const PORT = process.env.PORT || 3000;
-
-// 中间件
-app.use(express.json());
 
 // 创建 MCP 服务器
 const mcpServer = new Server(
   {
-    name: "hello-mcp-ts",
+    name: "mcp-server",
     version: "1.0.0",
   },
   {
@@ -146,46 +143,62 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// 健康检查端点
-app.get("/health", (req, res) => {
-  res.json({ status: "UP", server: "hello-mcp-ts" });
-});
+// 存储会话的传输层实例
+const sessions = new Map<string, StreamableHTTPServerTransport>();
 
-// SSE 端点 - 符合 MCP 协议
-app.get("/sse", async (req, res) => {
-  console.log("新的 SSE 连接建立");
-  
-  // 设置 SSE 响应头
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  
-  // 创建 SSE 传输层
-  const transport = new SSEServerTransport("/messages", res);
-  
-  // 连接 MCP 服务器
-  await mcpServer.connect(transport);
-  
-  // 处理连接关闭
-  req.on("close", () => {
-    console.log("SSE 连接已关闭");
+// 创建 HTTP 服务器
+const httpServer = createServer(async (req, res) => {
+  // 只处理 /mcp 路径
+  if (!req.url?.startsWith("/mcp")) {
+    if (req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "UP", server: "mcp-server" }));
+      return;
+    }
+    res.writeHead(404);
+    res.end("Not Found");
+    return;
+  }
+
+  // 获取或创建会话
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
+
+  if (sessionId && sessions.has(sessionId)) {
+    transport = sessions.get(sessionId)!;
+  } else {
+    // 创建新的传输层实例
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: async (id) => {
+        console.log(`会话已初始化: ${id}`);
+        sessions.set(id, transport);
+      },
+      onsessionclosed: async (id) => {
+        console.log(`会话已关闭: ${id}`);
+        sessions.delete(id);
+      },
+    });
+
+    // 连接 MCP 服务器到传输层
+    await mcpServer.connect(transport);
+  }
+
+  // 处理请求
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    const parsedBody = body ? JSON.parse(body) : undefined;
+    await transport.handleRequest(req, res, parsedBody);
   });
 });
 
-// 消息端点 - 处理客户端请求
-app.post("/messages", async (req, res) => {
-  console.log("收到消息请求:", req.body);
-  
-  // 这里应该由 SSEServerTransport 处理
-  // 但为了兼容性，我们也可以直接处理
-  res.json({ received: true });
-});
-
-// 启动服务器
-app.listen(PORT, () => {
+httpServer.listen(Number(PORT), () => {
   console.log(`MCP TypeScript Server 已启动`);
   console.log(`服务器地址: http://localhost:${PORT}`);
-  console.log(`SSE 端点: http://localhost:${PORT}/sse`);
-  console.log(`消息端点: http://localhost:${PORT}/messages`);
+  console.log(`MCP 端点: http://localhost:${PORT}/mcp`);
   console.log(`健康检查: http://localhost:${PORT}/health`);
 });
