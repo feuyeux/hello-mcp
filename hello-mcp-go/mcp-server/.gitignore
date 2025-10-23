@@ -1,0 +1,8 @@
+# Binaries
+*.exe
+*.exe~
+server
+server.exe
+
+# Go
+go.sum

@@ -1,0 +1,10 @@
+# Binaries
+*.exe
+*.exe~
+client
+client.exe
+test_client
+test_client.exe
+
+# Go
+go.sum
