@@ -2,7 +2,7 @@
 
 This repository contains **Model Context Protocol (MCP)** implementations across multiple programming languages, demonstrating a periodic table query tool.
 
-All implementations follow the **MCP Protocol Version 2025-06-18** specification and use **SSE (Server-Sent Events) HTTP transport** for communication.
+All implementations follow the **MCP Protocol Version 2025-06-18** specification.
 
 ## 📚 Resources
 
