@@ -20,7 +20,7 @@ All implementations follow the **MCP Protocol Version 2025-06-18** specification
 6. [Rust SDK](https://github.com/modelcontextprotocol/rust-sdk)
 7. [Swift SDK](https://github.com/modelcontextprotocol/swift-sdk)
 8. [Go SDK](https://github.com/modelcontextprotocol/go-sdk)
-9. [PHP SDK](https://github.com/modelcontextprotocol/php-sdk)
+9. [PHP SDK](https://github.com/modelcontextprotocol/php-sdk) (coming soon)
  
 ## MCP Inspector
 
