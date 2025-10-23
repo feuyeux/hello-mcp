@@ -5,7 +5,7 @@ import FoundationNetworking
 #endif
 
 /// 消息类
-public struct Message: Codable {
+public struct OllamaMessage: Codable {
     public let role: String
     public let content: String
     
@@ -14,6 +14,9 @@ public struct Message: Codable {
         self.content = content
     }
 }
+
+// 为了向后兼容，保留 Message 别名
+public typealias Message = OllamaMessage
 
 /// 工具调用类
 public struct ToolCall: Codable {
@@ -63,7 +66,7 @@ public class OllamaClient {
             "stream": false,
             "messages": messages.map { ["role": $0.role, "content": $0.content] },
             "tools": tools.map { tool in
-                tool.mapValues { value in
+                tool.mapValues { value -> Any in
                     switch value {
                     case .string(let s): return s
                     case .int(let i): return i

@@ -1,5 +1,5 @@
 import Foundation
-import ModelContextProtocol
+import MCP
 
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -19,27 +19,25 @@ public class HelloClient {
     /// 列举所有可用工具
     public func listTools() async throws -> String {
         let client = Client(
-            info: Implementation(
-                name: "hello-mcp-client",
-                version: "0.1.0"
-            )
+            name: "hello-mcp-client",
+            version: "0.1.0"
         )
         
-        let transport = StreamableHTTPClientTransport(
-            url: URL(string: endpoint)!
+        let transport = HTTPClientTransport(
+            endpoint: URL(string: endpoint)!,
+            streaming: true
         )
         
-        try await client.connect(transport: transport)
-        let _ = try await client.initialize()
+        let _ = try await client.connect(transport: transport)
         
-        let result = try await client.listTools()
+        let (tools, _) = try await client.listTools()
         
         var toolsList: [String] = []
-        for tool in result.tools {
-            toolsList.append("工具名称: \(tool.name), 描述: \(tool.description)")
+        for tool in tools {
+            toolsList.append("工具名称: \(tool.name), 描述: \(tool.description ?? "无描述")")
         }
         
-        try await client.close()
+        await client.disconnect()
         
         let toolsStr = toolsList.joined(separator: "\n")
         print("列举工具成功:\n\(toolsStr)")
@@ -51,33 +49,31 @@ public class HelloClient {
         print("查询元素: \(name)")
         
         let client = Client(
-            info: Implementation(
-                name: "hello-mcp-client",
-                version: "0.1.0"
-            )
+            name: "hello-mcp-client",
+            version: "0.1.0"
         )
         
-        let transport = StreamableHTTPClientTransport(
-            url: URL(string: endpoint)!
+        let transport = HTTPClientTransport(
+            endpoint: URL(string: endpoint)!,
+            streaming: true
         )
         
-        try await client.connect(transport: transport)
-        let _ = try await client.initialize()
+        let _ = try await client.connect(transport: transport)
         
-        let result = try await client.callTool(
+        let (content, _) = try await client.callTool(
             name: "get_element",
-            arguments: ["name": name]
+            arguments: ["name": .string(name)]
         )
         
-        var content = ""
-        if let textContent = result.content.first, case .text(let text) = textContent {
-            content = text.text
+        var resultText = ""
+        if let textContent = content.first, case .text(let text) = textContent {
+            resultText = text
         }
         
-        try await client.close()
+        await client.disconnect()
         
-        print("查询元素 \(name) 成功: \(content)")
-        return content
+        print("查询元素 \(name) 成功: \(resultText)")
+        return resultText
     }
     
     /// 根据原子序数查询元素信息
@@ -85,32 +81,30 @@ public class HelloClient {
         print("查询位置元素: \(position)")
         
         let client = Client(
-            info: Implementation(
-                name: "hello-mcp-client",
-                version: "0.1.0"
-            )
+            name: "hello-mcp-client",
+            version: "0.1.0"
         )
         
-        let transport = StreamableHTTPClientTransport(
-            url: URL(string: endpoint)!
+        let transport = HTTPClientTransport(
+            endpoint: URL(string: endpoint)!,
+            streaming: true
         )
         
-        try await client.connect(transport: transport)
-        let _ = try await client.initialize()
+        let _ = try await client.connect(transport: transport)
         
-        let result = try await client.callTool(
+        let (content, _) = try await client.callTool(
             name: "get_element_by_position",
-            arguments: ["position": position]
+            arguments: ["position": .int(position)]
         )
         
-        var content = ""
-        if let textContent = result.content.first, case .text(let text) = textContent {
-            content = text.text
+        var resultText = ""
+        if let textContent = content.first, case .text(let text) = textContent {
+            resultText = text
         }
         
-        try await client.close()
+        await client.disconnect()
         
-        print("查询位置元素 \(position) 成功: \(content)")
-        return content
+        print("查询位置元素 \(position) 成功: \(resultText)")
+        return resultText
     }
 }

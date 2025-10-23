@@ -1,6 +1,7 @@
 import Foundation
-import ModelContextProtocol
+import MCP
 import ArgumentParser
+import Logging
 
 @main
 struct MCPServerCommand: AsyncParsableCommand {
@@ -24,21 +25,23 @@ struct MCPServerCommand: AsyncParsableCommand {
         print("日志级别: \(logLevel)")
         print("响应模式: \(jsonResponse ? "JSON" : "SSE Stream")")
         
+        // 配置日志
+        var logger = Logger(label: "mcp.server")
+        logger.logLevel = .debug
+        
         // 创建 MCP 服务器
         let server = Server(
-            info: Implementation(
-                name: "mcp-server",
-                version: "0.1.0"
-            ),
-            capabilities: ServerCapabilities(
+            name: "mcp-server",
+            version: "0.1.0",
+            capabilities: .init(
                 tools: .init(listChanged: false)
             )
         )
         
         // 注册工具列表处理器
-        server.addHandler { (_: ListToolsRequest) -> ListToolsResult in
+        await server.withMethodHandler(ListTools.self) { _ in
             print("处理 tools/list 请求")
-            return ListToolsResult(
+            return ListTools.Result(
                 tools: [
                     Tool(
                         name: "get_element",
@@ -73,56 +76,56 @@ struct MCPServerCommand: AsyncParsableCommand {
         }
         
         // 注册工具调用处理器
-        server.addHandler { (request: CallToolRequest) -> CallToolResult in
-            print("处理 tools/call 请求: \(request.params.name)")
+        await server.withMethodHandler(CallTool.self) { params in
+            print("处理 tools/call 请求: \(params.name)")
             
-            let name = request.params.name
-            let arguments = request.params.arguments ?? [:]
+            let name = params.name
+            let arguments = params.arguments ?? [:]
             
             switch name {
             case "get_element":
-                if let elementName = arguments["name"] as? String,
+                if let elementName = arguments["name"]?.stringValue,
                    let element = PeriodicTable.findElement(byName: elementName) {
                     let text = "元素名称: \(element.name) (\(element.pronunciation), \(element.englishName)), " +
                               "原子序数: \(element.atomicNumber), 符号: \(element.symbol), " +
                               "相对原子质量: \(String(format: "%.3f", element.atomicWeight)), 周期: \(element.period), " +
                               "族: \(element.group)"
-                    return CallToolResult(content: [.text(TextContent(text: text))])
+                    return CallTool.Result(content: [.text(text)])
                 }
-                return CallToolResult(content: [.text(TextContent(text: "元素不存在"))])
+                return CallTool.Result(content: [.text("元素不存在")])
                 
             case "get_element_by_position":
-                if let position = arguments["position"] as? Int,
+                if let position = arguments["position"]?.intValue,
                    position >= 1 && position <= 118,
                    let element = PeriodicTable.findElement(byAtomicNumber: position) {
                     let text = "元素名称: \(element.name) (\(element.pronunciation), \(element.englishName)), " +
                               "原子序数: \(element.atomicNumber), 符号: \(element.symbol), " +
                               "相对原子质量: \(String(format: "%.3f", element.atomicWeight)), 周期: \(element.period), " +
                               "族: \(element.group)"
-                    return CallToolResult(content: [.text(TextContent(text: text))])
+                    return CallTool.Result(content: [.text(text)])
                 }
-                return CallToolResult(content: [.text(TextContent(text: "元素不存在"))])
+                return CallTool.Result(content: [.text("元素不存在")])
                 
             default:
-                return CallToolResult(
-                    content: [.text(TextContent(text: "未知工具: \(name)"))],
+                return CallTool.Result(
+                    content: [.text("未知工具: \(name)")],
                     isError: true
                 )
             }
         }
         
-        // 使用 Streamable HTTP 传输层
-        print("使用 Streamable HTTP 传输层，端口: \(port)")
-        let transport = StreamableHTTPServerTransport(
-            host: "127.0.0.1",
-            port: port,
-            path: "/mcp",
-            useSSE: !jsonResponse
-        )
+        // 使用 HTTP 传输层（Streamable HTTP）
+        print("使用 HTTP 传输层，端口: \(port)")
+        let transport = HTTPServerTransport(port: port, logger: logger)
         
-        try await server.connect(transport: transport)
+        try await server.start(transport: transport)
+        
+        print("MCP 服务器已启动")
+        print("服务器地址: http://localhost:\(port)")
+        print("MCP 端点: http://localhost:\(port)/mcp")
+        print("健康检查: http://localhost:\(port)/health")
         
         // 保持服务器运行
-        try await Task.sleep(for: .seconds(.max))
+        await server.waitUntilCompleted()
     }
 }

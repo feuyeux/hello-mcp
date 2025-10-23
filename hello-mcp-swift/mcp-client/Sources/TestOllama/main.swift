@@ -1,7 +1,7 @@
 import Foundation
 import ArgumentParser
-import Client
-import ModelContextProtocol
+@testable import Client
+import MCP
 
 @main
 struct TestOllamaCommand: AsyncParsableCommand {
@@ -22,44 +22,42 @@ struct TestOllamaCommand: AsyncParsableCommand {
         do {
             // 获取可用工具
             let client = Client(
-                info: Implementation(
-                    name: "hello-mcp-client",
-                    version: "0.1.0"
-                )
+                name: "hello-mcp-client",
+                version: "0.1.0"
             )
             
-            let transport = StreamableHTTPClientTransport(
-                url: URL(string: "http://localhost:\(port)/mcp")!
+            let transport = HTTPClientTransport(
+                endpoint: URL(string: "http://localhost:\(port)/mcp")!,
+                streaming: true
             )
             
-            try await client.connect(transport: transport)
-            let _ = try await client.initialize()
-            let toolsResult = try await client.listTools()
+            let _ = try await client.connect(transport: transport)
+            let (tools, _) = try await client.listTools()
             
             // 转换工具格式为 Ollama 格式
-            var tools: [[String: AnyCodable]] = []
-            for tool in toolsResult.tools {
+            var ollamaTools: [[String: AnyCodable]] = []
+            for tool in tools {
                 let toolDict: [String: AnyCodable] = [
                     "type": .string("function"),
                     "function": .dictionary([
                         "name": .string(tool.name),
-                        "description": .string(tool.description),
-                        "parameters": .dictionary(convertToAnyCodable(tool.inputSchema))
+                        "description": .string(tool.description ?? ""),
+                        "parameters": .dictionary(convertValueToAnyCodable(tool.inputSchema))
                     ])
                 ]
-                tools.append(toolDict)
+                ollamaTools.append(toolDict)
             }
             
-            try await client.close()
+            await client.disconnect()
             
             // 构建消息
-            var messages: [Message] = []
+            var messages: [OllamaMessage] = []
             let query = "请帮我查询氢元素的详细信息，包括原子序数、符号和相对原子质量"
-            messages.append(Message(role: "user", content: query))
+            messages.append(OllamaMessage(role: "user", content: query))
             
             // 第一次调用 LLM
             print("第一次调用 LLM: \(query)")
-            let response = try await ollamaClient.chat(messages: messages, tools: tools)
+            let response = try await ollamaClient.chat(messages: messages, tools: ollamaTools)
             
             print("LLM 响应角色: \(response.role)")
             print("LLM 响应内容: \(response.content)")
@@ -80,13 +78,13 @@ struct TestOllamaCommand: AsyncParsableCommand {
                     print("工具执行结果: \(toolResult)")
                     
                     // 将工具结果添加到消息历史
-                    messages.append(Message(role: "assistant", content: ""))
-                    messages.append(Message(role: "tool", content: toolResult))
+                    messages.append(OllamaMessage(role: "assistant", content: ""))
+                    messages.append(OllamaMessage(role: "tool", content: toolResult))
                 }
                 
                 // 第二次调用 LLM，让其基于工具结果生成最终答案
                 print("第二次调用 LLM，生成最终答案...")
-                let finalResponse = try await ollamaClient.chat(messages: messages, tools: tools)
+                let finalResponse = try await ollamaClient.chat(messages: messages, tools: ollamaTools)
                 
                 print("最终答案: \(finalResponse.content)")
                 print("\n最终答案: \(finalResponse.content)\n")
@@ -106,5 +104,36 @@ struct TestOllamaCommand: AsyncParsableCommand {
     
     func convertToAnyCodable(_ dict: [String: Any]) -> [String: AnyCodable] {
         return dict.mapValues { AnyCodable($0) }
+    }
+    
+    func convertValueToAnyCodable(_ value: Value) -> [String: AnyCodable] {
+        if case .object(let dict) = value {
+            return dict.mapValues { value in
+                switch value {
+                case .string(let s): return AnyCodable(s)
+                case .int(let i): return AnyCodable(i)
+                case .double(let d): return AnyCodable(d)
+                case .bool(let b): return AnyCodable(b)
+                case .object(let obj): return AnyCodable(convertValueToAnyCodable(.object(obj)))
+                case .array(let arr): return AnyCodable(arr.map { convertValueToAny($0) })
+                case .null: return AnyCodable(NSNull())
+                case .data(_, let data): return AnyCodable(data.base64EncodedString())
+                }
+            }
+        }
+        return [:]
+    }
+    
+    func convertValueToAny(_ value: Value) -> Any {
+        switch value {
+        case .string(let s): return s
+        case .int(let i): return i
+        case .double(let d): return d
+        case .bool(let b): return b
+        case .object(let obj): return convertValueToAnyCodable(.object(obj))
+        case .array(let arr): return arr.map { convertValueToAny($0) }
+        case .null: return NSNull()
+        case .data(_, let data): return data.base64EncodedString()
+        }
     }
 }

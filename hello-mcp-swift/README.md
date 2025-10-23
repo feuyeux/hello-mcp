@@ -1,7 +1,13 @@
-# Hello MCP Swift
+# Hello MCP Swift(Doing)
 
 <https://github.com/modelcontextprotocol/swift-sdk/tags>
 
+
+```bash
+$ swift --version
+swift-driver version: 1.127.14.1 Apple Swift version 6.2 (swiftlang-6.2.0.19.9 clang-1700.3.19.1)
+Target: arm64-apple-macosx26.0
+```
 
 ```bash
 swift package resolve
