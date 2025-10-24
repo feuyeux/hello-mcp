@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.feuyeux.ai.hello.llm.OllamaClient;
 import org.feuyeux.ai.hello.mcp.HelloClient;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,14 +30,21 @@ public class LlmMcpIntegrationTest {
     if (portStr != null && !portStr.isEmpty()) {
       try {
         int port = Integer.parseInt(portStr);
-        HelloClient.setServerPort(port);
+        HelloClient.initClientWithServerPort(port);
         log.info("使用系统属性指定的端口: {}", port);
       } catch (NumberFormatException e) {
         log.warn("无效的端口号: {}, 使用默认端口", portStr);
       }
+    } else {
+      HelloClient.initClient();
     }
     ollamaClient = new OllamaClient();
     log.info("初始化 Ollama 客户端完成");
+  }
+
+  @AfterAll
+  public static void destroy() {
+    HelloClient.destroyClient();
   }
 
   @Test

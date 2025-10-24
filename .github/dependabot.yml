@@ -1,41 +1,154 @@
 version: 2
 updates:
+  # Python
   - package-ecosystem: "pip"
-    directory: "/hello-mcp-python"
+    directory: "/hello-mcp-python/mcp-server"
     schedule:
       interval: "weekly"
     labels:
       - "dependencies"
+      - "python"
+      - "automerge"
+
+  - package-ecosystem: "pip"
+    directory: "/hello-mcp-python/mcp-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+      - "automerge"
+
+  # TypeScript/Node.js
+  - package-ecosystem: "npm"
+    directory: "/hello-mcp-ts/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "typescript"
       - "automerge"
 
   - package-ecosystem: "npm"
-    directory: "/hello-mcp-ts"
+    directory: "/hello-mcp-ts/mcp-client"
     schedule:
       interval: "weekly"
     labels:
       - "dependencies"
+      - "typescript"
+      - "automerge"
+
+  # Rust
+  - package-ecosystem: "cargo"
+    directory: "/hello-mcp-rust/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "rust"
       - "automerge"
 
   - package-ecosystem: "cargo"
-    directory: "/hello-mcp-rust"
+    directory: "/hello-mcp-rust/mcp-client"
     schedule:
       interval: "weekly"
     labels:
       - "dependencies"
+      - "rust"
       - "automerge"
 
+  # Java (Maven multi-module project)
   - package-ecosystem: "maven"
     directory: "/hello-mcp-java"
     schedule:
       interval: "weekly"
     labels:
       - "dependencies"
+      - "java"
       - "automerge"
 
+  # Kotlin (Gradle multi-module project)
   - package-ecosystem: "gradle"
     directory: "/hello-mcp-kotlin"
     schedule:
       interval: "weekly"
     labels:
       - "dependencies"
+      - "kotlin"
+      - "automerge"
+
+  # C#
+  - package-ecosystem: "nuget"
+    directory: "/hello-mcp-csharp/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "csharp"
+      - "automerge"
+
+  - package-ecosystem: "nuget"
+    directory: "/hello-mcp-csharp/mcp-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "csharp"
+      - "automerge"
+
+  # Go
+  - package-ecosystem: "gomod"
+    directory: "/hello-mcp-go/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "go"
+      - "automerge"
+
+  - package-ecosystem: "gomod"
+    directory: "/hello-mcp-go/mcp-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "go"
+      - "automerge"
+
+  # PHP
+  - package-ecosystem: "composer"
+    directory: "/hello-mcp-php/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "php"
+      - "automerge"
+
+  - package-ecosystem: "composer"
+    directory: "/hello-mcp-php/mcp-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "php"
+      - "automerge"
+
+  # Swift
+  - package-ecosystem: "swift"
+    directory: "/hello-mcp-swift/mcp-server"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "swift"
+      - "automerge"
+
+  - package-ecosystem: "swift"
+    directory: "/hello-mcp-swift/mcp-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "swift"
       - "automerge"

@@ -37,7 +37,7 @@ public class HelloMcpServer {
 
     var mcpService = new HelloMcpService();
     var transportProvider =
-        HttpServletStreamableServerTransportProvider.builder().mcpEndpoint("mcp").build();
+        HttpServletStreamableServerTransportProvider.builder().mcpEndpoint("mcp/").build();
 
     McpSyncServer server =
         McpServer.sync(transportProvider)
@@ -47,7 +47,7 @@ public class HelloMcpServer {
                 McpServerFeatures.SyncToolSpecification.builder()
                     .tool(
                         McpSchema.Tool.builder()
-                            .name("getElement")
+                            .name("get_element")
                             .description("根据元素名称获取元素周期表元素信息（支持中文名、英文名或符号）")
                             .inputSchema(
                                 new McpSchema.JsonSchema(
@@ -74,7 +74,7 @@ public class HelloMcpServer {
                 McpServerFeatures.SyncToolSpecification.builder()
                     .tool(
                         McpSchema.Tool.builder()
-                            .name("getElementByPosition")
+                            .name("get_element_by_position")
                             .description("根据元素在周期表中的位置（原子序数）查询元素信息")
                             .inputSchema(
                                 new McpSchema.JsonSchema(

@@ -22,7 +22,7 @@ class HelloClient:
 
     def __init__(self, base_url: str = "http://localhost:9900"):
         self.base_url = base_url
-        self.endpoint = f"{base_url}/mcp"
+        self.endpoint = f"{base_url}/mcp/"
 
     async def list_tools(self) -> str:
         """列举所有可用工具"""

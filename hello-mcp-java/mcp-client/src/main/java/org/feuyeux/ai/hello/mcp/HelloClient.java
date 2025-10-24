@@ -1,10 +1,13 @@
 package org.feuyeux.ai.hello.mcp;
 
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -15,43 +18,33 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class HelloClient {
 
-  private static int serverPort = 9900; // 默认端口
-  private static HttpClientStreamableHttpTransport transport;
+  @Getter private static int serverPort = 9900; // 默认端口
+  private static McpAsyncClient client;
 
-  static {
-    initTransport();
+  public static void initClient() {
+    var transport =
+        HttpClientStreamableHttpTransport.builder("http://localhost:" + serverPort)
+            .endpoint("mcp/")
+            .build();
+    client = McpClient.async(transport).requestTimeout(Duration.ofHours(10)).build();
+    var resultMono = client.initialize();
+    log.info("{}", Objects.requireNonNull(resultMono.block()));
   }
 
-  /**
-   * 设置服务器端口
-   *
-   * @param port 服务器端口号
-   */
-  public static void setServerPort(int port) {
+  public static void initClientWithServerPort(int port) {
     serverPort = port;
-    initTransport();
-    log.info("客户端连接端口已设置为: {}", port);
+    initClient();
   }
 
-  /**
-   * 获取当前服务器端口
-   *
-   * @return 当前端口号
-   */
-  public static int getServerPort() {
-    return serverPort;
-  }
-
-  private static void initTransport() {
-    String baseUrl = "http://localhost:" + serverPort;
-    transport = HttpClientStreamableHttpTransport.builder(baseUrl).endpoint("mcp").build();
+  public static void destroyClient() {
+    if (client != null) {
+      client.close();
+      log.info("MCP客户端已关闭");
+    }
   }
 
   public static McpSchema.ListToolsResult listToolsResult() {
-    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
-      client.initialize();
-      return client.listTools();
-    }
+    return client.listTools().block();
   }
 
   public static String listTools() {
@@ -66,39 +59,36 @@ public class HelloClient {
           .append("\n");
     }
 
-    log.debug("列举工具成功: {}", toolsList);
+    log.info("列举工具成功: {}", toolsList);
     return toolsList.toString();
   }
 
   public static String getElement(String name) {
-    log.debug("查询元素: {}", name);
-    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
-      client.initialize();
-      McpSchema.CallToolResult result =
-          client.callTool(
-              McpSchema.CallToolRequest.builder()
-                  .name("getElement")
-                  .arguments(Map.of("name", name))
-                  .build());
+    log.info("查询元素: {}", name);
+    McpSchema.CallToolResult result =
+        client
+            .callTool(
+                McpSchema.CallToolRequest.builder()
+                    .name("get_element")
+                    .arguments(Map.of("name", name))
+                    .build())
+            .block();
 
-      log.debug("查询元素 {} 成功: {}", name, result.content());
-      return result.content().toString();
-    }
+    log.info("查询元素 {} 成功: {}", name, result.content());
+    return result.content().toString();
   }
 
   public static String getElementByPosition(int position) {
-    log.debug("查询位置元素: {}", position);
-    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofHours(10)).build()) {
-      client.initialize();
-      McpSchema.CallToolResult result =
-          client.callTool(
-              McpSchema.CallToolRequest.builder()
-                  .name("getElementByPosition")
-                  .arguments(Map.of("position", position))
-                  .build());
-
-      log.debug("查询位置元素 {} 成功: {}", position, result.content());
-      return result.content().toString();
-    }
+    log.info("查询位置元素: {}", position);
+    McpSchema.CallToolResult result =
+        client
+            .callTool(
+                McpSchema.CallToolRequest.builder()
+                    .name("get_element_by_position")
+                    .arguments(Map.of("position", position))
+                    .build())
+            .block();
+    log.info("查询位置元素 {} 成功: {}", position, Objects.requireNonNull(result).content());
+    return result.content().toString();
   }
 }

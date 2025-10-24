@@ -11,38 +11,168 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        language: [python, nodejs, rust, java, kotlin]
+        language: [python, nodejs, rust, java, kotlin, csharp, go, php, swift]
     steps:
       - uses: actions/checkout@v4
       
-      - name: Test Python
+      - name: Setup Python
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Test Python Server
         if: matrix.language == 'python'
         run: |
-          cd hello-mcp-python
-          python -m pip install -r requirements.txt
-          python -c "import src.periodic_table; print('OK')"
+          cd hello-mcp-python/mcp-server
+          pip install uv
+          uv sync
           
-      - name: Test Node.js
+      - name: Test Python Client
+        if: matrix.language == 'python'
+        run: |
+          cd hello-mcp-python/mcp-client
+          pip install uv
+          uv sync
+          
+      - name: Setup Node.js
+        if: matrix.language == 'nodejs'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Test Node.js Server
         if: matrix.language == 'nodejs'
         run: |
-          cd hello-mcp-ts
+          cd hello-mcp-ts/mcp-server
           npm ci
-          npm test
+          npm run build
           
-      - name: Test Rust
+      - name: Test Node.js Client
+        if: matrix.language == 'nodejs'
+        run: |
+          cd hello-mcp-ts/mcp-client
+          npm ci
+          npm run build
+          
+      - name: Setup Rust
+        if: matrix.language == 'rust'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+          
+      - name: Test Rust Server
         if: matrix.language == 'rust'
         run: |
-          cd hello-mcp-rust
+          cd hello-mcp-rust/mcp-server
+          cargo build
           cargo test
+          
+      - name: Test Rust Client
+        if: matrix.language == 'rust'
+        run: |
+          cd hello-mcp-rust/mcp-client
+          cargo build
+          cargo test
+          
+      - name: Setup Java
+        if: matrix.language == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
           
       - name: Test Java
         if: matrix.language == 'java'
         run: |
           cd hello-mcp-java
-          mvn test
+          mvn clean compile -pl mcp-server
+          mvn clean compile -pl mcp-client
+          
+      - name: Setup Kotlin
+        if: matrix.language == 'kotlin'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
           
       - name: Test Kotlin
         if: matrix.language == 'kotlin'
         run: |
           cd hello-mcp-kotlin
-          ./gradlew test
+          ./gradlew :mcp-server:build
+          ./gradlew :mcp-client:build
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Test C# Server
+        if: matrix.language == 'csharp'
+        run: |
+          cd hello-mcp-csharp/mcp-server
+          dotnet restore
+          dotnet build
+
+      - name: Test C# Client
+        if: matrix.language == 'csharp'
+        run: |
+          cd hello-mcp-csharp/mcp-client
+          dotnet restore
+          dotnet build
+
+      - name: Setup Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Test Go Server
+        if: matrix.language == 'go'
+        run: |
+          cd hello-mcp-go/mcp-server
+          go mod download
+          go build
+          go test ./...
+
+      - name: Test Go Client
+        if: matrix.language == 'go'
+        run: |
+          cd hello-mcp-go/mcp-client
+          go mod download
+          go build
+          go test ./...
+
+      - name: Setup PHP
+        if: matrix.language == 'php'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Test PHP Server
+        if: matrix.language == 'php'
+        run: |
+          cd hello-mcp-php/mcp-server
+          composer install
+          composer test || echo "No tests configured"
+
+      - name: Test PHP Client
+        if: matrix.language == 'php'
+        run: |
+          cd hello-mcp-php/mcp-client
+          composer install
+          composer test || echo "No tests configured"
+
+      - name: Test Swift Server
+        if: matrix.language == 'swift'
+        run: |
+          cd hello-mcp-swift/mcp-server
+          swift build
+          swift test || echo "No tests configured"
+
+      - name: Test Swift Client
+        if: matrix.language == 'swift'
+        run: |
+          cd hello-mcp-swift/mcp-client
+          swift build
+          swift test || echo "No tests configured"

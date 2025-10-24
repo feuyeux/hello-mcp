@@ -157,7 +157,7 @@ def main(
     starlette_app = Starlette(
         debug=True,
         routes=[
-            Mount("/mcp", app=handle_streamable_http),
+            Mount("/mcp/", app=handle_streamable_http),
         ],
         lifespan=lifespan,
     )
