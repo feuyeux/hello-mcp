@@ -38,7 +38,7 @@ repositories {
 val mcpKotlinSdkVersion = "0.7.2"  // Kotlin MCP SDK
 val ktorVersion = "3.0.3"
 val slf4jVersion = "2.0.17"
-val kotlinxCoroutinesVersion = "1.10.1"
+val kotlinxCoroutinesVersion = "2.0.21-coroutines-KBA-001"
 val junitVersion = "5.11.4"
 
 // 所有子项目的公共配置
