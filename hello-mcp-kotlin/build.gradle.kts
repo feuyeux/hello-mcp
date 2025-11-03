@@ -35,7 +35,7 @@ repositories {
 }
 
 // 版本管理
-val mcpKotlinSdkVersion = "0.7.2"  // Kotlin MCP SDK
+val mcpKotlinSdkVersion = "0.7.3"  // Kotlin MCP SDK
 val ktorVersion = "3.0.3"
 val slf4jVersion = "2.0.17"
 val kotlinxCoroutinesVersion = "1.10.1"
