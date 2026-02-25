@@ -30,8 +30,8 @@
         <log4j-slf4j.version>2.24.3</log4j-slf4j.version>
         <slf4j-api.version>2.0.17</slf4j-api.version>
         <!-- https://mvnrepository.com/artifact/io.modelcontextprotocol.sdk/mcp -->
-        <mcp.version>0.14.1</mcp.version>
-        <jackson.version>2.18.2</jackson.version>
+        <mcp.version>1.0.0</mcp.version>
+        <jackson.version>2.19.0</jackson.version>
         <junit.version>6.0.0</junit.version>
     </properties>
     <dependencyManagement>

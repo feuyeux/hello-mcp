@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using System.CommandLine;
 
 namespace Feuyeux.AI.Hello.Client;
 
@@ -10,32 +9,30 @@ public class TestClient
 {
     public static async Task<int> Main(string[] args)
     {
-        var rootCommand = new RootCommand("MCP Client Tests");
+        int port = 9900;
 
-        var portOption = new Option<int>(
-            "--port",
-            getDefaultValue: () => 9900,
-            description: "Port to connect to MCP server"
-        );
-
-        rootCommand.AddOption(portOption);
-
-        rootCommand.SetHandler(async (port) =>
+        // 解析命令行参数
+        for (int i = 0; i < args.Length; i++)
         {
-            using var loggerFactory = LoggerFactory.Create(builder =>
+            if (args[i] == "--port" && i + 1 < args.Length)
             {
-                builder.AddConsole();
-                builder.SetMinimumLevel(LogLevel.Information);
-            });
+                port = int.Parse(args[i + 1]);
+            }
+        }
 
-            var logger = loggerFactory.CreateLogger<HelloClient>();
-            var client = new HelloClient(logger, $"http://localhost:{port}");
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
 
-            Console.WriteLine($"连接到 MCP 服务器: http://localhost:{port}");
-            await RunAllTests(client);
-        }, portOption);
+        var logger = loggerFactory.CreateLogger<HelloClient>();
+        var client = new HelloClient(logger, $"http://localhost:{port}");
 
-        return await rootCommand.InvokeAsync(args);
+        Console.WriteLine($"连接到 MCP 服务器: http://localhost:{port}");
+        await RunAllTests(client);
+
+        return 0;
     }
 
     private static async Task RunAllTests(HelloClient client)

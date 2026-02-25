@@ -1,30 +1,23 @@
 import { HelloClient } from "./client.js";
 
-async function testListTools(port: number) {
-  console.log("=== 测试1: 列举Hello MCP工具 ===");
-  const client = new HelloClient(`http://localhost:${port}`);
-  const tools = await client.listTools();
-  console.log(`\n列举到的工具:\n${tools}\n`);
-}
-
-async function testGetElementByName(port: number) {
-  console.log("=== 测试2: 测试Hello MCP - 按名称查询 ===");
-  const client = new HelloClient(`http://localhost:${port}`);
-  const result = await client.getElement("氢");
-  console.log(`查询氢元素结果: ${result}\n`);
-}
-
-async function testGetElementByPosition(port: number) {
-  console.log("=== 测试3: 测试MCP工具调用 - 按位置查询 ===");
-  const client = new HelloClient(`http://localhost:${port}`);
-  const result = await client.getElementByPosition(6);
-  console.log(`查询原子序数为6的元素结果: ${result}\n`);
-}
-
 async function runAllTests(port: number) {
-  await testListTools(port);
-  await testGetElementByName(port);
-  await testGetElementByPosition(port);
+  const client = new HelloClient(`http://localhost:${port}`);
+
+  try {
+    console.log("=== 测试1: 列举Hello MCP工具 ===");
+    const tools = await client.listTools();
+    console.log(`\n列举到的工具:\n${tools}\n`);
+
+    console.log("=== 测试2: 测试Hello MCP - 按名称查询 ===");
+    const result = await client.getElement("氢");
+    console.log(`查询氢元素结果: ${result}\n`);
+
+    console.log("=== 测试3: 测试MCP工具调用 - 按位置查询 ===");
+    const result2 = await client.getElementByPosition(6);
+    console.log(`查询原子序数为6的元素结果: ${result2}\n`);
+  } finally {
+    await client.close();
+  }
 }
 
 // 解析命令行参数

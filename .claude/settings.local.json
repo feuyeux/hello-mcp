@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(uv pip:*)",
+      "Bash(pip index versions mcp)",
+      "Bash(uv sync)",
+      "Bash(tasklist)",
+      "Bash(taskkill:*)",
+      "Bash(go list:*)",
+      "Bash(cargo search:*)",
+      "Bash(dotnet nuget:*)",
+      "Bash(curl:*)",
+      "Bash(uv run test-client)",
+      "Bash(npm install:*)",
+      "Bash(npm run test:client:*)",
+      "Bash(node:*)",
+      "Bash(npx tsx:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)",
+      "Bash(mvn compile:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(./test-client.exe:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo run --bin test_client:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)"
+    ]
+  }
+}

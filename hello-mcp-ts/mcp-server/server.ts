@@ -144,7 +144,12 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 // 存储会话的传输层实例
-const sessions = new Map<string, StreamableHTTPServerTransport>();
+interface ServerSession {
+  transport: StreamableHTTPServerTransport;
+  server: Server;
+}
+
+const sessions = new Map<string, ServerSession>();
 
 // 创建 HTTP 服务器
 const httpServer = createServer(async (req, res) => {
@@ -162,38 +167,52 @@ const httpServer = createServer(async (req, res) => {
 
   // 获取或创建会话
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
-  let transport: StreamableHTTPServerTransport;
+
+  let session: ServerSession;
 
   if (sessionId && sessions.has(sessionId)) {
-    transport = sessions.get(sessionId)!;
+    session = sessions.get(sessionId)!;
   } else {
     // 创建新的传输层实例
-    transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-      onsessioninitialized: async (id) => {
-        console.log(`会话已初始化: ${id}`);
-        sessions.set(id, transport);
+    const transport = new StreamableHTTPServerTransport(
+      {
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: async (id) => {
+          console.log(`会话已初始化: ${id}`);
+          sessions.set(id, { transport, server: mcpServer });
+        },
+        onsessionclosed: async (id) => {
+          console.log(`会话已关闭: ${id}`);
+          sessions.delete(id);
+        },
       },
-      onsessionclosed: async (id) => {
-        console.log(`会话已关闭: ${id}`);
-        sessions.delete(id);
-      },
-    });
+      {
+        jsonResponse: true,
+      }
+    );
 
     // 连接 MCP 服务器到传输层
     await mcpServer.connect(transport);
+    session = { transport, server: mcpServer };
   }
 
   // 处理请求
   let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
+  for await (const chunk of req) {
+    body += chunk;
+  }
 
-  req.on("end", async () => {
-    const parsedBody = body ? JSON.parse(body) : undefined;
-    await transport.handleRequest(req, res, parsedBody);
-  });
+  try {
+    console.log(`处理请求: ${req.method}, sessionId: ${sessionId || 'new'}`);
+    await session.transport.handleRequest(req, res, body ? JSON.parse(body) : undefined);
+    console.log(`请求处理完成: ${req.method}`);
+  } catch (error) {
+    console.error("Error handling request:", error);
+    if (!res.headersSent) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Internal server error" }));
+    }
+  }
 });
 
 httpServer.listen(Number(PORT), () => {
