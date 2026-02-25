@@ -39,6 +39,11 @@ public class HelloMcpServer {
     var transportProvider =
         HttpServletStreamableServerTransportProvider.builder().mcpEndpoint("mcp/").build();
 
+    // 创建 MCP Server 并构建
+    // 注意：server 变量在构建完成后不再直接使用，但 build 仍然正常工作
+    // 原因：McpServer.sync() 在构建过程中会将 server 实例注册到 transportProvider 内部
+    // transportProvider 持有 server 的引用，当 HTTP 请求到来时通过它调用已注册的 server
+    // 这种设计将 server 的生命周期与 transportProvider 绑定，由 transportProvider 统一管理
     McpSyncServer server =
         McpServer.sync(transportProvider)
             .serverInfo("hello-mcp-server", "1.0.0")
