@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.feuyeux.ai.hello.llm.OllamaClient;
-import org.feuyeux.ai.hello.mcp.HelloClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -30,13 +29,13 @@ public class LlmMcpIntegrationTest {
     if (portStr != null && !portStr.isEmpty()) {
       try {
         int port = Integer.parseInt(portStr);
-        HelloClient.initClientWithServerPort(port);
+        HelloMcpClient.initClientWithServerPort(port);
         log.info("使用系统属性指定的端口: {}", port);
       } catch (NumberFormatException e) {
         log.warn("无效的端口号: {}, 使用默认端口", portStr);
       }
     } else {
-      HelloClient.initClient();
+      HelloMcpClient.initClient();
     }
     ollamaClient = new OllamaClient();
     log.info("初始化 Ollama 客户端完成");
@@ -44,7 +43,7 @@ public class LlmMcpIntegrationTest {
 
   @AfterAll
   public static void destroy() {
-    HelloClient.destroyClient();
+    HelloMcpClient.destroyClient();
   }
 
   @Test
@@ -55,7 +54,7 @@ public class LlmMcpIntegrationTest {
       List<OllamaClient.Message> messages = new ArrayList<>();
       String query = "请帮我查询氢元素的详细信息，包括原子序数、符号和相对原子质量";
       messages.add(new OllamaClient.Message("user", query));
-      var tools = HelloClient.listToolsResult();
+      var tools = HelloMcpClient.listToolsResult();
       log.info("第一次调用 LLM: {}", query);
       OllamaClient.ChatResponse response = ollamaClient.chat(messages, tools);
 

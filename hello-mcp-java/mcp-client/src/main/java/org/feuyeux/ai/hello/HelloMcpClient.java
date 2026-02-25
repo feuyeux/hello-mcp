@@ -1,4 +1,4 @@
-package org.feuyeux.ai.hello.mcp;
+package org.feuyeux.ai.hello;
 
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>此类负责创建与MCP服务器的连接，用于调用元素周期表相关的工具。 使用 HTTP 客户端连接到 WebFlux 服务端。
  */
 @Slf4j
-public class HelloClient {
+public class HelloMcpClient {
 
   @Getter private static int serverPort = 9900; // 默认端口
   private static McpAsyncClient client;

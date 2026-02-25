@@ -1,13 +1,12 @@
 package org.feuyeux.ai.hello;
 
-import static org.feuyeux.ai.hello.utils.DotEnv.loadEnv;
-
 import lombok.extern.slf4j.Slf4j;
-import org.feuyeux.ai.hello.mcp.HelloClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import static org.feuyeux.ai.hello.utils.DotEnv.loadEnv;
 
 /**
  * MCP测试套件
@@ -25,39 +24,39 @@ public class HelloMcpTests {
     if (portStr != null && !portStr.isEmpty()) {
       try {
         int port = Integer.parseInt(portStr);
-        HelloClient.initClientWithServerPort(port);
+        HelloMcpClient.initClientWithServerPort(port);
         log.info("使用系统属性指定的端口: {}", port);
       } catch (NumberFormatException e) {
         log.warn("无效的端口号: {}, 使用默认端口", portStr);
       }
     } else {
-      HelloClient.initClient();
+      HelloMcpClient.initClient();
     }
   }
 
   @AfterAll
   public static void destroy() {
-    HelloClient.destroyClient();
+    HelloMcpClient.destroyClient();
   }
 
   @Test
   @DisplayName("列举Hello MCP工具")
   public void testListTools() {
-    String tools = HelloClient.listTools();
+    String tools = HelloMcpClient.listTools();
     log.info("列举到的工具: \n{}", tools);
   }
 
   @Test
   @DisplayName("测试Hello MCP - 按名称查询")
   public void testHelloMcpByName() {
-    String result = HelloClient.getElement("氢");
+    String result = HelloMcpClient.getElement("氢");
     log.info("查询氢元素结果: {}", result);
   }
 
   @Test
   @DisplayName("测试MCP工具调用 - 按位置查询")
   public void testMcpToolByPosition() {
-    String result = HelloClient.getElementByPosition(6);
+    String result = HelloMcpClient.getElementByPosition(6);
     log.info("查询原子序数为6的元素结果: {}", result);
   }
 }

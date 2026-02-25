@@ -110,8 +110,27 @@ public class HelloMcpServer {
     var tomcat = TomChat.createTomcatServer("", port, transportProvider);
     try {
       tomcat.start();
+      log.info("服务器已启动，监听端口: {}", port);
+
+      // 添加关闭钩子
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    try {
+                      tomcat.stop();
+                      tomcat.destroy();
+                    } catch (Exception e) {
+                      log.error("关闭Tomcat失败", e);
+                    }
+                  }));
+
+      // 阻塞主线程
+      Thread.currentThread().join();
     } catch (LifecycleException e) {
       throw new RuntimeException(e);
+    } catch (InterruptedException e) {
+      log.info("服务器被中断");
     }
   }
 }

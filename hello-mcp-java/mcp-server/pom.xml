@@ -15,7 +15,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <tomcat.version>11.0.2</tomcat.version>
+        <!-- https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core -->
+        <tomcat.version>11.0.18</tomcat.version>
         <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
     </properties>
 

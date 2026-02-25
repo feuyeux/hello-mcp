@@ -1,9 +1,5 @@
 package org.feuyeux.ai.hello.llm;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,7 +10,11 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.feuyeux.ai.hello.mcp.HelloClient;
+import org.feuyeux.ai.hello.HelloMcpClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Ollama 客户端
@@ -134,7 +134,7 @@ public class OllamaClient {
       switch (toolCall.getName()) {
         case "getElement":
           String name = (String) toolCall.getArguments().get("name");
-          result = HelloClient.getElement(name);
+          result = HelloMcpClient.getElement(name);
           break;
 
         case "getElementByPosition":
@@ -147,7 +147,7 @@ public class OllamaClient {
           } else {
             position = Integer.parseInt(positionObj.toString());
           }
-          result = HelloClient.getElementByPosition(position);
+          result = HelloMcpClient.getElementByPosition(position);
           break;
 
         default:
