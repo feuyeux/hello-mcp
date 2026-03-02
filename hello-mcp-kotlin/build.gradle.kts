@@ -97,7 +97,7 @@ subprojects {
 
         // Logging
         add("implementation", "org.slf4j:slf4j-api:$slf4jVersion")
-        add("implementation", "ch.qos.logback:logback-classic:1.5.18")
+        add("implementation", "ch.qos.logback:logback-classic:1.5.20")
         add("implementation", "io.github.oshai:kotlin-logging-jvm:7.0.13")
 
         // Test dependencies
