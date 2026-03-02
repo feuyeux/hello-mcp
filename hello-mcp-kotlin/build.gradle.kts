@@ -75,7 +75,7 @@ subprojects {
         // Kotlin standard library and coroutines
         add("implementation", "org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         add("implementation", "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion")
-        add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+        add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
         // MCP Kotlin SDK
         add("implementation", "io.modelcontextprotocol:kotlin-sdk-core:$mcpKotlinSdkVersion")
